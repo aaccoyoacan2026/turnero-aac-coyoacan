@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turnero — Pantalla Pública | AAC Coyoacán</title>
+<style>
+  :root {
+    --azul: #1a4d8f;
+    --verde: #14532d;
+    --gris: #f1f5f9;
+    --texto: #0f172a;
+    --texto-suave: #475569;
+    --borde: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0a1628;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: #0d1f3c;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #1e3a5f;
+  }
+  .logo-texto { font-size: 15px; font-weight: 700; color: #93c5fd; letter-spacing: 0.5px; }
+  .logo-sub   { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .header-derecha { display: flex; align-items: center; gap: 14px; }
+  .reloj { font-size: 22px; font-weight: 700; color: white; font-variant-numeric: tabular-nums; }
+  .badge-fb { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.3px; }
+  .badge-fb.conectado    { background: #22c55e; color: #052e16; }
+  .badge-fb.desconectado { background: #f97316; color: white; }
+  .badge-fb.conectando   { background: #475569; color: white; }
+
+  .contenido {
+    flex: 1; padding: 24px 28px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .seccion-titulo {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    color: #64748b; letter-spacing: 1px; margin-bottom: 12px;
+  }
+
+  /* ── Últimas llamadas ───────────────────────────────────────────────── */
+  .ultimas-llamadas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .llamada-card {
+    background: #0d1f3c;
+    border: 2px solid #1e3a5f;
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+  }
+  .llamada-card.nueva {
+    border-color: #22c55e;
+    background: #052e16;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.3);
+    animation: destello-verde 0.6s ease;
+  }
+  .llamada-card.reciente {
+    border-color: #3b82f6;
+    background: #0c1e3d;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+  }
+  @keyframes destello-verde {
+    0%   { background: #14532d; }
+    100% { background: #052e16; }
+  }
+  .lc-modulo { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .llamada-card.nueva    .lc-modulo { color: #86efac; }
+  .llamada-card.reciente .lc-modulo { color: #93c5fd; }
+  .lc-modulo.vacio { color: #334155; }
+  .lc-turno { font-size: 48px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .llamada-card.nueva    .lc-turno { color: #4ade80; }
+  .llamada-card.reciente .lc-turno { color: #60a5fa; }
+  .lc-turno.vacio { color: #1e293b; font-size: 30px; }
+  .lc-hora { font-size: 12px; color: #475569; margin-top: 8px; }
+  .lc-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 10px; font-weight: 800;
+    padding: 3px 8px; border-radius: 10px; text-transform: uppercase;
+  }
+  .lc-badge.nuevo     { background: #22c55e; color: #052e16; }
+  .lc-badge.atencion  { background: #3b82f6; color: #eff6ff; }
+
+  /* ── Grid módulos ───────────────────────────────────────────────────── */
+  .grid-todos {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .mod-card {
+    background: #0d1f3c;
+    border: 1.5px solid #1e3a5f;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .mod-card.activo { border-color: #1d4ed8; background: #0a1a35; }
+  .mc-nombre { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; letter-spacing: 0.3px; }
+  .mod-card.activo .mc-nombre { color: #93c5fd; }
+  .mc-turno { font-size: 22px; font-weight: 800; color: #1e293b; }
+  .mod-card.activo .mc-turno { color: white; }
+  .mc-count { font-size: 10px; color: #334155; margin-top: 4px; }
+  .mod-card.activo .mc-count { color: #475569; }
+
+  .pie {
+    background: #0d1f3c;
+    border-top: 2px solid #1e3a5f;
+    text-align: center;
+    padding: 10px;
+    font-size: 11px;
+    color: #334155;
+  }
+
+  /* ── Banner activar audio ───────────────────────────────────────────── */
+  .banner-audio {
+    position: fixed;
+    bottom: 44px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e3a5f;
+    border: 1.5px solid #3b82f6;
+    border-radius: 30px;
+    padding: 10px 24px;
+    font-size: 13px;
+    color: #93c5fd;
+    cursor: pointer;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: flotando 2s ease-in-out infinite;
+    transition: opacity 0.5s;
+  }
+  .banner-audio.oculto { opacity: 0; pointer-events: none; }
+  @keyframes flotando {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-5px); }
+  }
+
+  /* ── Overlay anuncio ────────────────────────────────────────────────── */
+  .overlay-anuncio {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center; justify-content: center; flex-direction: column;
+    animation: fadeIn 0.3s ease;
+  }
+  .overlay-anuncio.visible { display: flex; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .anuncio-caja {
+    background: #0a2212;
+    border: 4px solid #22c55e;
+    border-radius: 24px;
+    padding: 50px 80px;
+    text-align: center;
+    max-width: 600px;
+  }
+  .anuncio-label    { font-size: 18px; font-weight: 700; color: #86efac; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .anuncio-turno    { font-size: 100px; font-weight: 900; color: #4ade80; line-height: 1; }
+  .anuncio-modulo   { font-size: 28px; font-weight: 700; color: #86efac; margin-top: 16px; }
+  .anuncio-dirijase { font-size: 16px; color: #4ade80; margin-top: 8px; opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<div class="overlay-anuncio" id="overlay">
+  <div class="anuncio-caja">
+    <div class="anuncio-label">🔔 Turno en atención</div>
+    <div class="anuncio-turno"  id="anuncio-turno">—</div>
+    <div class="anuncio-modulo" id="anuncio-modulo">—</div>
+    <div class="anuncio-dirijase">Diríjase a ventanilla</div>
+  </div>
+</div>
+
+<!-- Banner para activar audio (los navegadores requieren interacción del usuario) -->
+<div class="banner-audio" id="banner-audio" onclick="activarAudio()">
+  🔊 Toca aquí para activar el sonido de llamadas
+</div>
+
+<header>
+  <div>
+    <div class="logo-texto">🏢 AAC Coyoacán — Sistema de Turnos</div>
+    <div class="logo-sub">SGÍA · Dirección General de Servicios a Usuarios</div>
+  </div>
+  <div class="header-derecha">
+    <div class="badge-fb conectando" id="badge-fb">⟳ Conectando...</div>
+    <div class="reloj" id="reloj">00:00:00</div>
+  </div>
+</header>
+
+<div class="contenido">
+  <div>
+    <div class="seccion-titulo">📢 Turnos en atención</div>
+    <div class="ultimas-llamadas" id="ultimas-llamadas">
+      <div style="color:#334155;font-size:14px;grid-column:1/-1;text-align:center;padding:30px;">
+        Conectando con Firebase...
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="seccion-titulo">Estado de módulos</div>
+    <div class="grid-todos" id="grid-todos"></div>
+  </div>
+</div>
+
+<div class="pie">
+  Sistema de Turnos Digital · AAC Coyoacán · Firebase Realtime Database · Actualización en tiempo real
+</div>
+
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, query, orderByChild, limitToLast }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ── Configuración Firebase ─────────────────────────────────────────────────
+  const firebaseConfig = {
+    projectId:   "turnero-aac-coyoacan",
+    databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const MODS = 6;
+
+  // ── Badge de conexión ──────────────────────────────────────────────────────
+  onValue(ref(db, '.info/connected'), snap => {
+    const b = document.getElementById('badge-fb');
+    if (snap.val()) {
+      b.textContent = '✔ En línea';
+      b.className   = 'badge-fb conectado';
+    } else {
+      b.textContent = '✖ Sin señal';
+      b.className   = 'badge-fb desconectado';
+    }
+  });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function pad(n)      { return String(n).padStart(3, '0'); }
+  function turnoStr(t) { return (t && t > 0) ? `T-${pad(t)}` : '—'; }
+
+  // ── Sonido de llamada (Web Audio API — sin librerías externas) ────────────
+  // Los navegadores bloquean audio hasta que el usuario interactúa con la página.
+  // Al hacer clic en cualquier lugar se desbloquea el contexto de audio.
+  let audioCtx = null;
+
+  function obtenerAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  // Desbloquear al primer toque/clic
+  document.addEventListener('click',     obtenerAudioCtx, { once: false });
+  document.addEventListener('touchstart', obtenerAudioCtx, { once: false });
+
+  // Función del banner — activa audio y lo oculta
+  window.activarAudio = function() {
+    obtenerAudioCtx();
+    // Reproducir un pitido silencioso de prueba para confirmar que funciona
+    reproducirPitido();
+    const banner = document.getElementById('banner-audio');
+    banner.textContent = '✔ Sonido activado';
+    setTimeout(() => banner.classList.add('oculto'), 1500);
+  };
+
+  function reproducirPitido() {
+    try {
+      const ctx = obtenerAudioCtx();
+      const ahora = ctx.currentTime;
+
+      // Secuencia: tono alto → tono medio → tono bajo
+      // Cada nota: oscilador + ganancia con envelope suave
+      const notas = [
+        { freq: 880, inicio: 0,    dur: 0.18 },   // La5 — alerta
+        { freq: 660, inicio: 0.20, dur: 0.18 },   // Mi5 — confirmación
+        { freq: 440, inicio: 0.40, dur: 0.28 },   // La4 — cierre
+      ];
+
+      notas.forEach(({ freq, inicio, dur }) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type      = 'sine';
+        osc.frequency.setValueAtTime(freq, ahora + inicio);
+
+        // Envelope: ataque rápido, decay suave
+        gain.gain.setValueAtTime(0, ahora + inicio);
+        gain.gain.linearRampToValueAtTime(0.45, ahora + inicio + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ahora + inicio + dur);
+
+        osc.start(ahora + inicio);
+        osc.stop(ahora + inicio + dur + 0.05);
+      });
+    } catch (e) {
+      console.warn('Audio no disponible:', e);
+    }
+  }
+
+  // ── Overlay de anuncio ─────────────────────────────────────────────────────
+  let overlayTimer = null;
+  function mostrarAnuncio(turno, modulo) {
+    reproducirPitido();
+    document.getElementById('anuncio-turno').textContent  = `T-${pad(turno)}`;
+    document.getElementById('anuncio-modulo').textContent = `Módulo ${modulo}`;
+    const ov = document.getElementById('overlay');
+    ov.classList.add('visible');
+    if (overlayTimer) clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(() => ov.classList.remove('visible'), 4000);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FUENTE 1 — HISTORIAL: controla "Turnos en atención"
+  // Se escucha con limitToLast(3) → Firebase envía SOLO las últimas 3 entradas
+  // y dispara onValue cada vez que llega una nueva.
+  // ═══════════════════════════════════════════════════════════════════════════
+  let primeraLecturaHist = true;   // evitar anuncio al cargar la página
+  let ultimoTsVisto      = 0;
+
+  onValue(
+    query(ref(db, 'historial'), orderByChild('ts'), limitToLast(3)),
+    snap => {
+      const entradas = [];
+      snap.forEach(child => entradas.push(child.val()));
+      // entradas llega en orden ascendente por ts; invertimos para tener la más nueva primero
+      entradas.reverse();
+
+      // ── Detectar turno nuevo y disparar anuncio ──────────────────────────
+      if (!primeraLecturaHist && entradas.length > 0) {
+        const masReciente = entradas[0];
+        if (masReciente.ts > ultimoTsVisto) {
+          mostrarAnuncio(masReciente.turno, masReciente.modulo);
+        }
+      }
+      if (entradas.length > 0) ultimoTsVisto = entradas[0].ts;
+      primeraLecturaHist = false;
+
+      // ── Renderizar sección "Turnos en atención" ──────────────────────────
+      renderizarUltimas(entradas);
+    }
+  );
+
+  function renderizarUltimas(entradas) {
+    const lista = [...entradas];
+    while (lista.length < 3) lista.push(null);   // rellenar huecos vacíos
+
+    document.getElementById('ultimas-llamadas').innerHTML = lista.map((h, i) => {
+      if (!h) return `
+        <div class="llamada-card">
+          <div class="lc-modulo vacio">Sin llamada</div>
+          <div class="lc-turno vacio">—</div>
+          <div class="lc-hora"></div>
+        </div>`;
+
+      const esNueva = i === 0;
+      return `
+        <div class="llamada-card ${esNueva ? 'nueva' : 'reciente'}">
+          <span class="lc-badge ${esNueva ? 'nuevo' : 'atencion'}">
+            ${esNueva ? 'NUEVO' : 'EN ATENCIÓN'}
+          </span>
+          <div class="lc-modulo">Módulo ${h.modulo}</div>
+          <div class="lc-turno">${turnoStr(h.turno)}</div>
+          <div class="lc-hora">${h.hora}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FUENTE 2 — ESTADO: controla el grid de módulos (turno actual + contadores)
+  // ═══════════════════════════════════════════════════════════════════════════
+  onValue(ref(db, 'estado'), snap => {
+    const estado = snap.val();
+    if (!estado) return;
+    renderizarGrid(estado);
+  });
+
+  function renderizarGrid(estado) {
+    const gt = document.getElementById('grid-todos');
+    gt.innerHTML = '';
+    for (let i = 1; i <= MODS; i++) {
+      const mod    = (estado.modulos && estado.modulos[i]) || { turnoActual: 0, totalAtendidos: 0 };
+      const activo = mod.turnoActual && mod.turnoActual > 0;
+      gt.innerHTML += `
+        <div class="mod-card${activo ? ' activo' : ''}">
+          <div class="mc-nombre">Mód. ${i}</div>
+          <div class="mc-turno">${turnoStr(mod.turnoActual)}</div>
+          <div class="mc-count">${mod.totalAtendidos ?? 0} atendidos</div>
+        </div>`;
+    }
+  }
+
+  // ── Reloj ──────────────────────────────────────────────────────────────────
+  function actualizarReloj() {
+    document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-MX');
+  }
+  setInterval(actualizarReloj, 1000);
+  actualizarReloj();
+</script>
+</body>
+</html>
