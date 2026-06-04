@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turno Actual v2 | AAC Coyoacán</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --azul-oscuro: #020c1b;
+    --azul-mid:    #0a1f3c;
+    --azul-borde:  #112240;
+    --azul-panel:  #080f1f;
+    --acento:      #64ffda;
+    --acento-dim:  rgba(100,255,218,0.08);
+    --acento-glow: rgba(100,255,218,0.25);
+    --texto-dim:   #8892a4;
+    --blanco:      #ccd6f6;
+    --panel-w:     340px;  /* ancho del panel lateral */
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── LAYOUT RAÍZ: header + contenido ────────────────────────────────── */
+  .root {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Fondo animado ───────────────────────────────────────────────────── */
+  .fondo {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  }
+  .fondo::before, .fondo::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.07;
+    animation: respirar 10s ease-in-out infinite;
+  }
+  .fondo::before {
+    width: 500px; height: 500px;
+    background: var(--acento);
+    top: -100px; right: calc(var(--panel-w) + 40px);
+  }
+  .fondo::after {
+    width: 400px; height: 400px;
+    background: #0ea5e9;
+    bottom: -80px; right: 0;
+    animation-delay: -5s;
+  }
+  @keyframes respirar {
+    0%,100% { transform: scale(1);    opacity: 0.06; }
+    50%      { transform: scale(1.2);  opacity: 0.12; }
+  }
+
+  /* ── HEADER ──────────────────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--azul-borde);
+    background: rgba(2,12,27,0.85);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+  .header-izq { display: flex; align-items: center; gap: 12px; }
+  .header-logo {
+    font-size: 12px; font-weight: 700;
+    color: var(--acento); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .header-sep  { width: 1px; height: 18px; background: var(--azul-borde); }
+  .header-sub  { font-size: 10px; color: var(--texto-dim); letter-spacing: 0.4px; }
+  .header-der  { display: flex; align-items: center; gap: 10px; }
+  .reloj {
+    font-size: 16px; font-weight: 700;
+    color: var(--blanco); font-variant-numeric: tabular-nums; letter-spacing: 2px;
+  }
+  .badge {
+    font-size: 9px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .badge.conectado    { background: var(--acento); color: var(--azul-oscuro); }
+  .badge.desconectado { background: #f97316; color: white; }
+  .badge.conectando   { background: var(--azul-borde); color: var(--texto-dim); }
+
+  /* Botón para cambiar URL del iframe */
+  .btn-url {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--azul-borde);
+    border: 1px solid rgba(100,255,218,0.2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 10px; font-weight: 600;
+    color: var(--acento);
+    cursor: pointer; letter-spacing: 0.5px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .btn-url:hover { background: rgba(100,255,218,0.08); border-color: var(--acento); }
+
+  /* ── CUERPO: iframe + panel lateral ─────────────────────────────────── */
+  .cuerpo {
+    display: grid;
+    grid-template-columns: 1fr var(--panel-w);
+    overflow: hidden;
+  }
+
+  /* ── ZONA IFRAME ─────────────────────────────────────────────────────── */
+  .zona-media {
+    position: relative;
+    background: #000;
+    overflow: hidden;
+  }
+
+  /* Placeholder cuando no hay URL */
+  .iframe-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 100%;
+    color: var(--texto-dim);
+    text-align: center;
+    padding: 40px;
+  }
+  .iframe-placeholder .icono {
+    font-size: 48px; opacity: 0.3;
+  }
+  .iframe-placeholder p {
+    font-size: 14px; line-height: 1.7; max-width: 340px;
+  }
+  .iframe-placeholder code {
+    font-size: 11px;
+    background: var(--azul-borde);
+    padding: 2px 8px; border-radius: 4px;
+    color: var(--acento);
+  }
+  .btn-configurar {
+    background: var(--acento); color: var(--azul-oscuro);
+    border: none; border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.3px;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+  .btn-configurar:hover { opacity: 0.85; }
+
+  /* ── CONTROL DE ZOOM ─────────────────────────────────────────────────── */
+  /* El iframe se hace más grande que su contenedor y se escala con transform */
+  .iframe-contenido {
+    position: absolute;
+    top: 0; left: 0;
+    border: none;
+    transform-origin: top left;
+    /* width/height y scale se controlan desde JS */
+  }
+
+  .zoom-bar {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(8,15,31,0.88);
+    border: 1px solid rgba(100,255,218,0.2);
+    border-radius: 30px;
+    padding: 6px 14px;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  /* Mostrar al pasar el mouse sobre la zona-media */
+  .zona-media:hover .zoom-bar { opacity: 1; }
+
+  .zoom-btn {
+    width: 26px; height: 26px;
+    background: var(--azul-borde);
+    border: 1px solid rgba(100,255,218,0.2);
+    border-radius: 50%;
+    color: var(--acento);
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .zoom-btn:hover { background: rgba(100,255,218,0.12); border-color: var(--acento); }
+
+  .zoom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 110px; height: 3px;
+    background: var(--azul-borde);
+    border-radius: 2px;
+    outline: none; cursor: pointer;
+  }
+  .zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--acento);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--acento-glow);
+    cursor: pointer;
+  }
+  .zoom-slider::-moz-range-thumb {
+    width: 14px; height: 14px;
+    background: var(--acento);
+    border: none; border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .zoom-label {
+    font-family: 'Inter', monospace;
+    font-size: 10px; font-weight: 700;
+    color: var(--acento);
+    min-width: 36px; text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .zoom-reset {
+    font-size: 9px; font-weight: 700;
+    color: var(--texto-dim);
+    cursor: pointer; letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: none;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .zoom-reset:hover { color: var(--acento); border-color: rgba(100,255,218,0.2); }
+
+  /* Overlay de bloqueo cuando hay nuevo turno — llama la atención */
+  .media-overlay {
+    position: absolute; inset: 0;
+    background: rgba(2,12,27,0.88);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 5;
+  }
+  .media-overlay.visible { opacity: 1; pointer-events: all; }
+  .overlay-caja {
+    text-align: center;
+    animation: escala-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes escala-in {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .overlay-label {
+    font-size: 13px; font-weight: 700;
+    color: var(--acento); letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .overlay-turno {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(100px, 14vw, 180px);
+    color: var(--acento);
+    line-height: 1;
+    text-shadow: 0 0 80px var(--acento-glow), 0 0 160px rgba(100,255,218,0.08);
+    letter-spacing: 6px;
+    animation: flash-overlay 0.5s ease forwards;
+  }
+  @keyframes flash-overlay {
+    0%   { transform: scale(0.85); }
+    60%  { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  .overlay-modulo {
+    font-size: 20px; font-weight: 600;
+    color: var(--blanco); letter-spacing: 3px;
+    text-transform: uppercase; margin-top: 8px;
+  }
+  .overlay-dirijase {
+    font-size: 13px; color: var(--acento); opacity: 0.7;
+    margin-top: 6px; letter-spacing: 1px;
+  }
+
+  /* ── PANEL LATERAL ───────────────────────────────────────────────────── */
+  .panel {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    background: var(--azul-panel);
+    border-left: 1px solid var(--azul-borde);
+    overflow: hidden;
+  }
+
+  /* Zona principal del panel */
+  .panel-centro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Círculo decorativo de fondo en el panel */
+  .panel-anillo {
+    position: absolute;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    border: 1px solid var(--acento-dim);
+    animation: girar 24s linear infinite;
+    pointer-events: none;
+  }
+  .panel-anillo::after {
+    content: '';
+    position: absolute;
+    width: 8px; height: 8px;
+    background: var(--acento);
+    border-radius: 50%;
+    top: -4px; left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 10px var(--acento);
+  }
+  @keyframes girar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .panel-etiqueta {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--texto-dim); margin-bottom: 6px;
+    position: relative; z-index: 1;
+  }
+
+  .panel-turno {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 10vw, 110px);
+    line-height: 1;
+    color: var(--acento);
+    text-shadow: 0 0 40px var(--acento-glow);
+    letter-spacing: 4px;
+    position: relative; z-index: 1;
+  }
+  .panel-turno.flash { animation: flash-panel 0.5s ease forwards; }
+  @keyframes flash-panel {
+    0%   { opacity: 0; transform: scale(0.82); }
+    60%  { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .panel-turno.idle { color: #1e3a5f; text-shadow: none; }
+
+  .panel-modulo {
+    font-size: 14px; font-weight: 600;
+    color: var(--blanco); letter-spacing: 2.5px;
+    text-transform: uppercase; margin-top: 6px;
+    opacity: 0.8; position: relative; z-index: 1;
+    min-height: 22px;
+  }
+  .panel-modulo.idle { opacity: 0.2; }
+
+  .panel-linea {
+    width: 80px; height: 1.5px;
+    background: linear-gradient(90deg, transparent, var(--acento), transparent);
+    margin: 14px auto 0;
+    opacity: 0.4;
+    position: relative; z-index: 1;
+  }
+
+  /* Estadísticas en el panel */
+  .panel-stats {
+    border-top: 1px solid var(--azul-borde);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .pstat {
+    text-align: center;
+    padding: 10px 4px;
+    background: rgba(17,34,64,0.5);
+    border-radius: 8px;
+    border: 1px solid var(--azul-borde);
+  }
+  .pstat-label {
+    font-size: 8px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--texto-dim); margin-bottom: 5px;
+  }
+  .pstat-valor {
+    font-size: 16px; font-weight: 700;
+    color: var(--blanco);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── MODAL CONFIGURAR URL ────────────────────────────────────────────── */
+  .modal-fondo {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-fondo.visible { display: flex; }
+  .modal {
+    background: #0d1a30;
+    border: 1px solid rgba(100,255,218,0.2);
+    border-radius: 16px;
+    padding: 32px;
+    width: min(480px, 90vw);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    animation: modal-in 0.25s ease both;
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal h2 {
+    font-size: 16px; font-weight: 700;
+    color: var(--acento); margin-bottom: 6px; letter-spacing: 0.5px;
+  }
+  .modal p { font-size: 12px; color: var(--texto-dim); margin-bottom: 20px; line-height: 1.6; }
+  .modal p code {
+    background: var(--azul-borde);
+    padding: 1px 6px; border-radius: 4px;
+    color: var(--acento); font-size: 11px;
+  }
+  .modal-input {
+    width: 100%;
+    background: var(--azul-mid);
+    border: 1px solid var(--azul-borde);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'Inter', monospace;
+    font-size: 13px; color: var(--blanco);
+    outline: none; margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .modal-input:focus { border-color: var(--acento); }
+  .modal-input::placeholder { color: var(--texto-dim); }
+  .modal-acciones { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-btn {
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: opacity 0.2s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn.cancelar {
+    background: var(--azul-borde); color: var(--texto-dim);
+  }
+  .modal-btn.aplicar {
+    background: var(--acento); color: var(--azul-oscuro);
+  }
+  .modal-ejemplos {
+    margin-bottom: 16px;
+  }
+  .modal-ejemplos p { margin-bottom: 8px; font-size: 11px; color: var(--texto-dim); }
+  .ejemplo-btn {
+    display: inline-block;
+    margin: 3px 4px 3px 0;
+    background: var(--azul-borde);
+    border: 1px solid rgba(100,255,218,0.15);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 10px; color: var(--acento);
+    cursor: pointer; font-weight: 600;
+    transition: background 0.2s;
+  }
+  .ejemplo-btn:hover { background: rgba(100,255,218,0.1); }
+
+  /* ── BANNER AUDIO ────────────────────────────────────────────────────── */
+  .banner-audio {
+    position: fixed;
+    bottom: 20px;
+    right: calc(var(--panel-w) + 20px);
+    background: var(--azul-mid);
+    border: 1px solid rgba(100,255,218,0.3);
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-size: 11px; font-weight: 600;
+    color: var(--acento);
+    cursor: pointer; z-index: 50;
+    display: flex; align-items: center; gap: 7px;
+    letter-spacing: 0.4px;
+    animation: flotando 2.5s ease-in-out infinite;
+    transition: opacity 0.5s;
+    white-space: nowrap;
+  }
+  .banner-audio.oculto { opacity: 0; pointer-events: none; animation: none; }
+  @keyframes flotando {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Fondo decorativo -->
+<div class="fondo"></div>
+
+<!-- Banner de audio -->
+<div class="banner-audio" id="banner-audio" onclick="activarAudio()">
+  🔊 Toca aquí para activar el sonido
+</div>
+
+<!-- Modal configurar URL -->
+<div class="modal-fondo" id="modal-url">
+  <div class="modal">
+    <h2>📺 Configurar contenido multimedia</h2>
+    <p>
+      Ingresa la URL de la página o video que deseas mostrar.<br>
+      Para YouTube usa la URL de tipo <code>embed</code>.<br>
+      Nota: algunos sitios bloquean el modo embebido.
+    </p>
+    <div class="modal-ejemplos">
+      <p>Ejemplos rápidos:</p>
+      <span class="ejemplo-btn" onclick="usarEjemplo('youtube')">▶ YouTube (video)</span>
+      <span class="ejemplo-btn" onclick="usarEjemplo('noticias')">📰 Once Noticias</span>
+      <span class="ejemplo-btn" onclick="usarEjemplo('tiempo')">🌤 Clima</span>
+      <span class="ejemplo-btn" onclick="usarEjemplo('sgía')">🏛 SGÍA</span>
+    </div>
+    <input class="modal-input" id="url-input" type="url"
+      placeholder="https://www.youtube.com/embed/ID_DEL_VIDEO" />
+    <div class="modal-acciones">
+      <button class="modal-btn cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-btn aplicar" onclick="aplicarUrl()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Root -->
+<div class="root">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-izq">
+      <div class="header-logo">AAC Coyoacán</div>
+      <div class="header-sep"></div>
+      <div class="header-sub">SGÍA · Sistema de Turnos</div>
+    </div>
+    <div class="header-der">
+      <button class="btn-url" onclick="abrirModal()">📺 Cambiar contenido</button>
+      <div class="badge conectando" id="badge-fb">⟳ Conectando</div>
+      <div class="reloj" id="reloj">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- Cuerpo principal -->
+  <div class="cuerpo">
+
+    <!-- Zona multimedia -->
+    <div class="zona-media">
+
+      <!-- Placeholder inicial -->
+      <div class="iframe-placeholder" id="placeholder">
+        <div class="icono">📺</div>
+        <p>
+          Aquí se mostrará el contenido multimedia.<br>
+          Haz clic en <strong>"Cambiar contenido"</strong> en la barra superior
+          para ingresar la URL de un video de YouTube u otra página web.
+        </p>
+        <button class="btn-configurar" onclick="abrirModal()">Configurar ahora</button>
+      </div>
+
+      <!-- iframe (oculto hasta que haya URL) -->
+      <iframe
+        class="iframe-contenido"
+        id="iframe-media"
+        src=""
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+        allowfullscreen
+        style="display:none;"
+      ></iframe>
+
+      <!-- Barra de zoom — aparece al pasar el mouse -->
+      <div class="zoom-bar" id="zoom-bar">
+        <button class="zoom-btn" onclick="ajustarZoom(-0.1)" title="Alejar">−</button>
+        <input  class="zoom-slider" id="zoom-slider" type="range"
+                min="0.3" max="2.0" step="0.05" value="1"
+                oninput="setZoom(parseFloat(this.value))">
+        <span   class="zoom-label" id="zoom-label">100%</span>
+        <button class="zoom-btn" onclick="ajustarZoom(0.1)" title="Acercar">+</button>
+        <button class="zoom-reset" onclick="setZoom(1)" title="Restablecer">↺ Reset</button>
+      </div>
+
+      <!-- Overlay de nuevo turno sobre el iframe -->
+      <div class="media-overlay" id="media-overlay">
+        <div class="overlay-caja">
+          <div class="overlay-label">🔔 Turno en atención</div>
+          <div class="overlay-turno" id="overlay-turno">—</div>
+          <div class="overlay-modulo" id="overlay-modulo">—</div>
+          <div class="overlay-dirijase">Diríjase a ventanilla</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel lateral del turno -->
+    <div class="panel">
+      <div class="panel-centro">
+        <div class="panel-anillo"></div>
+        <div class="panel-etiqueta">Turno en atención</div>
+        <div class="panel-turno idle" id="panel-turno">—</div>
+        <div class="panel-modulo idle" id="panel-modulo">En espera</div>
+        <div class="panel-linea"></div>
+      </div>
+
+      <div class="panel-stats">
+        <div class="pstat">
+          <div class="pstat-label">Último</div>
+          <div class="pstat-valor" id="stat-ultimo">—</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-label">Atendidos</div>
+          <div class="pstat-valor" id="stat-total">0</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-label">Activos</div>
+          <div class="pstat-valor" id="stat-modulos">0/6</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ── Firebase ───────────────────────────────────────────────────────────────
+  const firebaseConfig = {
+    projectId:   "turnero-aac-coyoacan",
+    databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // ── Conexión ───────────────────────────────────────────────────────────────
+  onValue(ref(db, '.info/connected'), snap => {
+    const b = document.getElementById('badge-fb');
+    if (snap.val()) { b.textContent = '✔ En línea';  b.className = 'badge conectado'; }
+    else            { b.textContent = '✖ Sin señal'; b.className = 'badge desconectado'; }
+  });
+
+  // ── Audio ──────────────────────────────────────────────────────────────────
+  let audioCtx = null;
+  function obtenerAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  document.addEventListener('click',      obtenerAudioCtx, { once: false });
+  document.addEventListener('touchstart', obtenerAudioCtx, { once: false });
+
+  window.activarAudio = function() {
+    obtenerAudioCtx(); reproducirPitido();
+    const b = document.getElementById('banner-audio');
+    b.textContent = '✔ Sonido activado';
+    setTimeout(() => b.classList.add('oculto'), 1500);
+  };
+
+  function reproducirPitido() {
+    try {
+      const ctx = obtenerAudioCtx(), ahora = ctx.currentTime;
+      [{ freq:880, inicio:0, dur:0.18 }, { freq:660, inicio:0.20, dur:0.18 }, { freq:440, inicio:0.40, dur:0.28 }]
+      .forEach(({ freq, inicio, dur }) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ahora + inicio);
+        gain.gain.setValueAtTime(0, ahora + inicio);
+        gain.gain.linearRampToValueAtTime(0.45, ahora + inicio + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ahora + inicio + dur);
+        osc.start(ahora + inicio);
+        osc.stop(ahora + inicio + dur + 0.05);
+      });
+    } catch(e) { console.warn('Audio:', e); }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function pad(n) { return String(n).padStart(3, '0'); }
+
+  // ── Estado Firebase ────────────────────────────────────────────────────────
+  let primerEstado      = true;
+  let ultimoTurnoGlobal = 0;
+  let ultimoModulo      = null;
+  let ultimaRepeticion  = 0;
+  let overlayTimer      = null;
+
+  onValue(ref(db, 'estado'), snap => {
+    const estado = snap.val();
+    if (!estado) return;
+
+    const turnoActual = estado.turnoGlobal || 0;
+    const repeticion  = estado.repeticion  || 0;
+
+    let moduloActual = ultimoModulo;
+    if (estado.modulos) {
+      Object.values(estado.modulos).forEach(m => {
+        if (m.turnoActual === turnoActual && turnoActual > 0) moduloActual = m.id;
+      });
+    }
+
+    const esTurnoNuevo = !primerEstado && turnoActual > ultimoTurnoGlobal;
+    const esRepeticion = !primerEstado && repeticion > ultimaRepeticion;
+    const esNuevo      = esTurnoNuevo || esRepeticion;
+
+    if (turnoActual > 0 && moduloActual) {
+      mostrarTurno(turnoActual, moduloActual, esNuevo);
+      ultimoModulo = moduloActual;
+    }
+
+    ultimoTurnoGlobal = turnoActual;
+    ultimaRepeticion  = repeticion;
+    primerEstado      = false;
+
+    // Stats
+    let total = 0, activos = 0;
+    if (estado.modulos) {
+      Object.values(estado.modulos).forEach(m => {
+        total   += m.totalAtendidos || 0;
+        if (m.turnoActual && m.turnoActual > 0) activos++;
+      });
+    }
+    document.getElementById('stat-total').textContent   = total;
+    document.getElementById('stat-modulos').textContent = `${activos}/6`;
+    document.getElementById('stat-ultimo').textContent  =
+      turnoActual > 0 ? `T-${pad(turnoActual)}` : '—';
+  });
+
+  // ── Mostrar turno ──────────────────────────────────────────────────────────
+  function mostrarTurno(turno, modulo, animar) {
+    // Panel lateral
+    const elNum = document.getElementById('panel-turno');
+    const elMod = document.getElementById('panel-modulo');
+    elNum.classList.remove('flash', 'idle');
+    elMod.classList.remove('idle');
+    elNum.textContent = `T-${pad(turno)}`;
+    elMod.textContent = `Módulo ${modulo}`;
+    void elNum.offsetWidth;
+    if (animar) {
+      elNum.classList.add('flash');
+      reproducirPitido();
+      // Overlay sobre el iframe
+      mostrarOverlay(turno, modulo);
+    }
+  }
+
+  function mostrarOverlay(turno, modulo) {
+    document.getElementById('overlay-turno').textContent  = `T-${pad(turno)}`;
+    document.getElementById('overlay-modulo').textContent = `Módulo ${modulo}`;
+    const ov = document.getElementById('media-overlay');
+    ov.classList.add('visible');
+    if (overlayTimer) clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(() => ov.classList.remove('visible'), 5000);
+  }
+
+  // ── Reloj ──────────────────────────────────────────────────────────────────
+  function tick() {
+    document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-MX');
+  }
+  setInterval(tick, 1000);
+  tick();
+
+  // ── Modal y control de URL ─────────────────────────────────────────────────
+  const EJEMPLOS = {
+    youtube:  'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=1',
+    noticias: 'https://www.oncenoticias.digital/en-vivo/',
+    tiempo:   'https://weather.com/es-MX/tiempo/hoy/l/Ciudad+de+México',
+    sgía:     'https://www.sacmex.cdmx.gob.mx/'
+  };
+
+  window.abrirModal = function() {
+    const url = document.getElementById('iframe-media').src;
+    document.getElementById('url-input').value = (url && url !== 'about:blank') ? url : '';
+    document.getElementById('modal-url').classList.add('visible');
+    setTimeout(() => document.getElementById('url-input').focus(), 100);
+  };
+
+  window.cerrarModal = function() {
+    document.getElementById('modal-url').classList.remove('visible');
+  };
+
+  window.usarEjemplo = function(tipo) {
+    document.getElementById('url-input').value = EJEMPLOS[tipo] || '';
+  };
+
+  window.aplicarUrl = function() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) { cerrarModal(); return; }
+    const iframe = document.getElementById('iframe-media');
+    const placeholder = document.getElementById('placeholder');
+    iframe.src = url;
+    iframe.style.display = 'block';
+    placeholder.style.display = 'none';
+    cerrarModal();
+  };
+
+  // Cerrar modal con Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') cerrarModal();
+  });
+
+  // ── ZOOM DEL IFRAME ────────────────────────────────────────────────────────
+  // No se puede hacer zoom al contenido de un iframe externo por CORS.
+  // La técnica correcta: agrandar el iframe más que su contenedor y
+  // aplicar transform:scale() inverso para que quepa visualmente.
+  // scale > 1  → zoom in  (iframe más pequeño visualmente, contenido más grande)
+  // scale < 1  → zoom out (se ve más contenido de la página)
+
+  let escalaActual = 1.0;
+
+  function aplicarZoom() {
+    const iframe    = document.getElementById('iframe-media');
+    const contenedor = iframe.parentElement;  // .zona-media
+    const w = contenedor.offsetWidth;
+    const h = contenedor.offsetHeight;
+
+    // Calcular dimensiones reales del iframe (inversas al scale)
+    const iw = Math.round(w / escalaActual);
+    const ih = Math.round(h / escalaActual);
+
+    iframe.style.width  = iw + 'px';
+    iframe.style.height = ih + 'px';
+    iframe.style.transform = `scale(${escalaActual})`;
+
+    // Actualizar UI
+    const pct = Math.round(escalaActual * 100);
+    document.getElementById('zoom-label').textContent  = pct + '%';
+    document.getElementById('zoom-slider').value       = escalaActual;
+  }
+
+  window.setZoom = function(val) {
+    escalaActual = Math.min(2.0, Math.max(0.3, Math.round(val * 20) / 20));
+    aplicarZoom();
+  };
+
+  window.ajustarZoom = function(delta) {
+    setZoom(escalaActual + delta);
+  };
+
+  // Aplicar zoom al redimensionar ventana
+  window.addEventListener('resize', () => {
+    if (document.getElementById('iframe-media').style.display !== 'none') {
+      aplicarZoom();
+    }
+  });
+
+  // Sobrescribir aplicarUrl para iniciar con zoom 1
+  const _aplicarUrlOriginal = window.aplicarUrl;
+  window.aplicarUrl = function() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) { cerrarModal(); return; }
+    const iframe = document.getElementById('iframe-media');
+    const placeholder = document.getElementById('placeholder');
+    iframe.src = url;
+    iframe.style.display = 'block';
+    placeholder.style.display = 'none';
+    cerrarModal();
+    // Resetear zoom al cargar nueva URL
+    escalaActual = 1.0;
+    requestAnimationFrame(aplicarZoom);
+  };
+
+  // Atajos de teclado para zoom (Ctrl+= / Ctrl+- / Ctrl+0)
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === '=' || e.key === '+') { e.preventDefault(); ajustarZoom(0.1); }
+      if (e.key === '-')                  { e.preventDefault(); ajustarZoom(-0.1); }
+      if (e.key === '0')                  { e.preventDefault(); setZoom(1); }
+    }
+  });
+</script>
+</body>
+</html>
