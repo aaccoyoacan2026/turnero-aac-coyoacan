@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Recepción — Generar Turno | AAC Coyoacán</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0e1117;
+    --surface:     #161b27;
+    --surface-2:   #1c2333;
+    --surface-3:   #222b3e;
+    --borde:       #2a3550;
+    --borde-suave: #1e2a42;
+    --acento:      #3b82f6;
+    --acento-dim:  rgba(59,130,246,0.12);
+    --acento-glow: rgba(59,130,246,0.3);
+    --verde:       #10b981;
+    --verde-dim:   rgba(16,185,129,0.12);
+    --rojo:        #ef4444;
+    --rojo-dim:    rgba(239,68,68,0.12);
+    --naranja:     #f97316;
+    --naranja-dim: rgba(249,115,22,0.12);
+    --morado:      #a855f7;
+    --morado-dim:  rgba(168,85,247,0.12);
+    --amarillo:    #f59e0b;
+    --amarillo-dim: rgba(245,158,11,0.12);
+    --texto:       #e2e8f0;
+    --texto-mid:   #94a3b8;
+    --texto-dim:   #475569;
+    --blanco:      #ffffff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+    min-height: 100vh;
+    line-height: 1.5;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(59,130,246,0.07) 0%, transparent 60%);
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input, textarea { -webkit-user-select: text; user-select: text; }
+
+  /* ── HEADER ──────────────────────────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(14,17,23,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--borde-suave);
+    padding: 14px clamp(16px, 4vw, 28px);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--blanco);
+  }
+  .logo-sub {
+    font-size: 10px; color: var(--texto-dim);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-top: 1px;
+  }
+  .chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    padding: 4px 11px; border-radius: 20px;
+    letter-spacing: 0.4px;
+  }
+  .chip.conectado    { background: var(--verde-dim);   color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+  .chip.desconectado { background: var(--naranja-dim); color: var(--naranja); border: 1px solid rgba(249,115,22,0.3); }
+  .chip.conectando   { background: rgba(71,85,105,0.2); color: var(--texto-dim); border: 1px solid var(--borde); }
+
+  /* ── TICKER DE SINCRONIZACIÓN ───────────────────────────────────────────── */
+  .ticker-wrap {
+    position: relative;
+    background: var(--surface);
+    border-bottom: 1px solid var(--borde-suave);
+    padding: 14px clamp(16px, 4vw, 28px) 16px;
+    overflow: hidden;
+  }
+  .ticker-eyebrow {
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--texto-dim);
+    text-align: center;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .ticker-eyebrow .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--verde);
+    animation: dot-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes dot-pulse {
+    0%,100% { opacity: 1;   transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .ticker-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 22px);
+    position: relative;
+  }
+
+  /* Flechas decorativas de flujo */
+  .ticker-flecha {
+    font-size: 13px;
+    color: var(--texto-dim);
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  .ticker-card {
+    flex-shrink: 0;
+    text-align: center;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+  }
+
+  /* Tarjeta lateral: turno ya asignado (izquierda) — desvanecida */
+  .ticker-card.lateral {
+    opacity: 0.38;
+    transform: scale(0.78);
+  }
+  .ticker-card.lateral .ticker-numero {
+    font-size: clamp(20px, 4vw, 28px);
+    color: var(--texto-mid);
+  }
+  .ticker-card.lateral .ticker-label {
+    font-size: 8px;
+    color: var(--texto-dim);
+  }
+
+  /* Tarjeta central: turno en asignación — destacada */
+  .ticker-card.central {
+    opacity: 1;
+    transform: scale(1);
+    position: relative;
+  }
+  .ticker-card.central::before {
+    content: '';
+    position: absolute;
+    inset: -10px -16px;
+    background: var(--acento-dim);
+    border: 1px solid rgba(59,130,246,0.35);
+    border-radius: 16px;
+    z-index: -1;
+    animation: central-glow 2s ease-in-out infinite;
+  }
+  @keyframes central-glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.25); }
+    50%      { box-shadow: 0 0 0 6px rgba(59,130,246,0.08); }
+  }
+  .ticker-card.central .ticker-numero {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(30px, 7vw, 42px);
+    font-weight: 800;
+    color: var(--blanco);
+    line-height: 1;
+  }
+  .ticker-card.central .ticker-label {
+    font-size: 9px; font-weight: 700;
+    color: var(--acento);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .ticker-numero {
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .ticker-label {
+    font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-top: 4px;
+  }
+
+  /* Animación de relevo: cuando cambia el turno, todo se desliza a la izquierda */
+  .ticker-track.deslizar .ticker-card.lateral.izq  { transform: scale(0.6) translateX(-30px); opacity: 0; }
+  .ticker-track.deslizar .ticker-card.central       { transform: scale(0.78) translateX(-40px); opacity: 0.38; }
+  .ticker-track.deslizar .ticker-card.lateral.der  { transform: scale(1) translateX(-40px); opacity: 1; }
+
+  /* ── Segundo ticker: variante verde (atención en módulo) ────────────────── */
+  .ticker-wrap-modulo {
+    border-top: 1px solid var(--borde-suave);
+  }
+  .dot-verde { background: var(--verde); }
+
+  .ticker-card.central.central-verde::before {
+    background: var(--verde-dim);
+    border-color: rgba(16,185,129,0.35);
+    animation: central-glow-verde 2s ease-in-out infinite;
+  }
+  @keyframes central-glow-verde {
+    0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.25); }
+    50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0.08); }
+  }
+  .ticker-card.central.central-verde .ticker-numero { color: var(--blanco); }
+  .ticker-card.central.central-verde .ticker-label  { color: var(--verde); }
+
+  /* ── MAIN ────────────────────────────────────────────────────────────────── */
+  main {
+    padding: clamp(16px, 4vw, 28px);
+    max-width: 600px;
+    margin: 0 auto;
+    padding-bottom: 140px; /* espacio para el botón flotante */
+  }
+
+  .paso {
+    margin-bottom: 28px;
+  }
+  .paso-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .paso-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    color: var(--acento);
+    background: var(--acento-dim);
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .paso-titulo {
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--texto-mid);
+  }
+
+  /* ── Selector de módulo: chips grandes táctiles ─────────────────────────── */
+  .modulos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .modulo-chip {
+    background: var(--surface);
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 14px;
+    padding: 18px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modulo-chip:active { transform: scale(0.96); }
+  .modulo-chip.selec {
+    border-color: var(--acento);
+    background: var(--acento-dim);
+    box-shadow: 0 0 0 1px var(--acento) inset;
+  }
+  .modulo-chip-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 24px; font-weight: 700;
+    color: var(--texto-mid);
+  }
+  .modulo-chip.selec .modulo-chip-num { color: var(--acento); }
+  .modulo-chip-label {
+    font-size: 9px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--texto-dim);
+    margin-top: 4px;
+  }
+  .modulo-chip.selec .modulo-chip-label { color: var(--acento); }
+
+  /* ── Selector de trámite: tarjetas grandes ──────────────────────────────── */
+  .tramites-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .tramite-card {
+    background: var(--surface);
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tramite-card:active { transform: scale(0.98); }
+  .tramite-card.selec {
+    border-color: var(--tramite-color, var(--acento));
+    background: var(--tramite-color-dim, var(--acento-dim));
+    box-shadow: 0 0 0 1px var(--tramite-color, var(--acento)) inset;
+  }
+  .tramite-icono {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: var(--surface-2);
+  }
+  .tramite-card.selec .tramite-icono {
+    background: var(--tramite-color, var(--acento));
+  }
+  .tramite-texto { flex: 1; }
+  .tramite-nombre {
+    font-size: 15px; font-weight: 700;
+    color: var(--texto);
+  }
+  .tramite-desc {
+    font-size: 11px; color: var(--texto-dim);
+    margin-top: 2px;
+  }
+  .tramite-check {
+    width: 22px; height: 22px; flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--borde);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent;
+    transition: all 0.15s ease;
+  }
+  .tramite-card.selec .tramite-check {
+    background: var(--tramite-color, var(--acento));
+    border-color: var(--tramite-color, var(--acento));
+    color: white;
+  }
+
+  /* ── Campo de notas opcional ─────────────────────────────────────────────── */
+  .nota-wrap { position: relative; }
+  .nota-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--texto);
+    outline: none; resize: none;
+    min-height: 60px;
+    transition: border-color 0.2s;
+  }
+  .nota-input:focus { border-color: var(--acento); }
+  .nota-input::placeholder { color: var(--texto-dim); }
+  .nota-contador {
+    position: absolute; bottom: 10px; right: 14px;
+    font-size: 10px; color: var(--texto-dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Resumen ─────────────────────────────────────────────────────────────── */
+  .resumen-card {
+    background: var(--surface-2);
+    border: 1px solid var(--borde-suave);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .resumen-fila {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px;
+  }
+  .resumen-label { color: var(--texto-dim); font-weight: 600; }
+  .resumen-valor { color: var(--texto); font-weight: 700; text-align: right; }
+  .resumen-valor.vacio { color: var(--texto-dim); font-weight: 500; }
+
+  /* ── Botón flotante de confirmación ─────────────────────────────────────── */
+  .barra-inferior {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(14,17,23,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--borde-suave);
+    padding: 14px clamp(16px, 4vw, 28px) calc(14px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+  }
+  .btn-confirmar {
+    width: 100%;
+    background: var(--acento);
+    color: white; border: none;
+    border-radius: 14px;
+    padding: 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 17px; font-weight: 800;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+    transition: background 0.2s, opacity 0.2s, transform 0.1s;
+  }
+  .btn-confirmar:active { transform: scale(0.98); }
+  .btn-confirmar:disabled {
+    background: var(--surface-2);
+    color: var(--texto-dim);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* ── Overlay de confirmación (turno generado) ───────────────────────────── */
+  .overlay-exito {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(2,8,18,0.92);
+    display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .overlay-exito.visible { display: flex; }
+  .exito-caja {
+    background: var(--surface);
+    border: 1px solid var(--borde);
+    border-radius: 24px;
+    padding: 40px 32px;
+    text-align: center;
+    width: min(360px, 88vw);
+    animation: exito-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes exito-in {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .exito-check {
+    width: 64px; height: 64px;
+    background: var(--verde-dim);
+    border: 2px solid var(--verde);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; color: var(--verde);
+    margin: 0 auto 18px;
+  }
+  .exito-eyebrow {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--verde); margin-bottom: 10px;
+  }
+  .exito-turno {
+    font-family: 'DM Mono', monospace;
+    font-size: 38px; font-weight: 700;
+    color: var(--blanco);
+    margin-bottom: 6px;
+  }
+  .exito-detalle {
+    font-size: 13px; color: var(--texto-mid);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .exito-detalle strong { color: var(--texto); }
+  .btn-nuevo {
+    width: 100%;
+    background: var(--acento);
+    color: white; border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ── Animación de entrada ────────────────────────────────────────────────── */
+  .paso { animation: entrada 0.35s ease both; }
+  .paso:nth-child(1) { animation-delay: 0.03s; }
+  .paso:nth-child(2) { animation-delay: 0.08s; }
+  .paso:nth-child(3) { animation-delay: 0.13s; }
+  .paso:nth-child(4) { animation-delay: 0.18s; }
+  @keyframes entrada {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">AAC Coyoacán</div>
+    <div class="logo-sub">Recepción · Generar turno</div>
+  </div>
+  <div class="chip conectando" id="badge-conexion">⟳ Conectando</div>
+</header>
+
+<!-- Ticker 1: Generación de turnos (consecutivo de Recepción) -->
+<div class="ticker-wrap">
+  <div class="ticker-eyebrow"><span class="dot"></span> Generación de turnos · Recepción</div>
+  <div class="ticker-track" id="ticker-track">
+    <div class="ticker-card lateral izq" id="ticker-anterior">
+      <div class="ticker-numero">—</div>
+      <div class="ticker-label">Generado</div>
+    </div>
+    <span class="ticker-flecha">→</span>
+    <div class="ticker-card central" id="ticker-actual">
+      <div class="ticker-numero">—</div>
+      <div class="ticker-label">Último generado</div>
+    </div>
+    <span class="ticker-flecha">→</span>
+    <div class="ticker-card lateral der" id="ticker-siguiente">
+      <div class="ticker-numero">—</div>
+      <div class="ticker-label">Próximo a generar</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ticker 2: Próximo turno a asignar en Recepción (cualquier dispositivo) -->
+<div class="ticker-wrap ticker-wrap-modulo">
+  <div class="ticker-eyebrow"><span class="dot dot-verde"></span> Asignación en Recepción · Todos los dispositivos</div>
+  <div class="ticker-track" id="ticker-track-modulo">
+    <div class="ticker-card lateral izq" id="ticker-modulo-anterior">
+      <div class="ticker-numero">—</div>
+      <div class="ticker-label">Último asignado</div>
+    </div>
+    <span class="ticker-flecha">→</span>
+    <div class="ticker-card central central-verde" id="ticker-modulo-actual">
+      <div class="ticker-numero">—</div>
+      <div class="ticker-label">Próximo a asignar</div>
+    </div>
+    <span class="ticker-flecha">→</span>
+    <div class="ticker-card lateral der" id="ticker-modulo-pendientes">
+      <div class="ticker-numero">—</div>
+      <div class="ticker-label">Sin llamar aún</div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- Paso 1: trámite -->
+  <div class="paso">
+    <div class="paso-header">
+      <span class="paso-num">1</span>
+      <span class="paso-titulo">Tipo de trámite</span>
+    </div>
+    <div class="tramites-grid" id="tramites-grid"></div>
+  </div>
+
+  <!-- Paso 2: nota opcional -->
+  <div class="paso">
+    <div class="paso-header">
+      <span class="paso-num">2</span>
+      <span class="paso-titulo">Nota adicional (opcional)</span>
+    </div>
+    <div class="nota-wrap">
+      <textarea class="nota-input" id="nota-input" maxlength="120"
+        placeholder="Ej. Trae documentos incompletos, requiere copia, etc."></textarea>
+      <span class="nota-contador" id="nota-contador">0/120</span>
+    </div>
+  </div>
+
+  <!-- Resumen -->
+  <div class="paso">
+    <div class="paso-header">
+      <span class="paso-num">✓</span>
+      <span class="paso-titulo">Resumen</span>
+    </div>
+    <div class="resumen-card">
+      <div class="resumen-fila">
+        <span class="resumen-label">Trámite</span>
+        <span class="resumen-valor vacio" id="resumen-tramite">Sin seleccionar</span>
+      </div>
+      <div class="resumen-fila">
+        <span class="resumen-label">Turnos en espera</span>
+        <span class="resumen-valor" id="resumen-turno">—</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="barra-inferior">
+  <button class="btn-confirmar" id="btn-confirmar" disabled onclick="confirmarTurno()">
+    🎫 Generar turno
+  </button>
+</div>
+
+<!-- Overlay de éxito -->
+<div class="overlay-exito" id="overlay-exito">
+  <div class="exito-caja">
+    <div class="exito-check">✓</div>
+    <div class="exito-eyebrow">Turno en fila de espera</div>
+    <div class="exito-turno" id="exito-turno">~T-000</div>
+    <div class="exito-detalle" id="exito-detalle">
+      Asignado al <strong>Módulo 1</strong><br>
+      Trámite: <strong>Aclaración</strong>
+    </div>
+    <button class="btn-nuevo" onclick="reiniciarFormulario()">+ Asignar otro turno</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, push, query, orderByChild }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    projectId:   "turnero-aac-coyoacan",
+    databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const MODS = 6;
+
+  const estadoRef = ref(db, 'estado');
+  const colaRef    = ref(db, 'cola');
+
+  // ── Catálogo de trámites ─────────────────────────────────────────────────
+  const TRAMITES = [
+    { id: 'aclaracion', nombre: 'Aclaración',          desc: 'Aclaración de pago o consumo', icono: '📝', color: '#3b82f6', colorDim: 'rgba(59,130,246,0.12)' },
+    { id: 'tramite',    nombre: 'Trámite',              desc: 'Alta, baja o cambio de servicio', icono: '📋', color: '#10b981', colorDim: 'rgba(16,185,129,0.12)' },
+    { id: 'adeudos',    nombre: 'Consulta de adeudos',  desc: 'Revisión de saldo o estado de cuenta', icono: '💰', color: '#f59e0b', colorDim: 'rgba(245,158,11,0.12)' },
+    { id: 'otro',       nombre: 'Otro',                 desc: 'Asunto no listado',                icono: '❓', color: '#a855f7', colorDim: 'rgba(168,85,247,0.12)' },
+  ];
+
+  let tramiteSel = null;
+  let colaPendienteCount = 0;
+
+  // ── Conexión ───────────────────────────────────────────────────────────────
+  onValue(ref(db, '.info/connected'), snap => {
+    const b = document.getElementById('badge-conexion');
+    if (snap.val()) { b.textContent = '✔ Conectado';    b.className = 'chip conectado'; }
+    else            { b.textContent = '✖ Sin conexión';  b.className = 'chip desconectado'; }
+  });
+
+  // ── Escuchar cola completa para mostrar pendientes Y último generado ───────
+  // colaTodos incluye atendidos y pendientes, ordenados por llegada (ts).
+  // El ÚLTIMO elemento de colaTodos es el turno más reciente que CUALQUIER
+  // dispositivo de Recepción puso en la fila — independientemente de si ya
+  // fue llamado o no por algún operador.
+  let colaOrdenada  = [];   // solo pendientes (sin atender) — para el contador y ticker 1
+  let colaTodos     = [];   // todos los registros — para saber el último generado
+  onValue(query(colaRef, orderByChild('ts')), snap => {
+    let pendientes = 0;
+    colaOrdenada = [];
+    colaTodos    = [];
+    snap.forEach(child => {
+      const v = child.val();
+      colaTodos.push(v);
+      if (!v.atendido) { pendientes++; colaOrdenada.push(v); }
+    });
+    colaPendienteCount = pendientes;
+    document.getElementById('resumen-turno').textContent = pendientes;
+    actualizarTicker();
+    actualizarTickerModulo();
+  });
+
+  // ── TICKER: turno atendido / en asignación / próximo ───────────────────────
+  function pad3(n) { return String(n).padStart(3, '0'); }
+
+  let ultimoTurnoActualTicker = null;
+  let estadoTickerActual      = { anterior: null, actual: null, siguiente: null };
+
+  // El consecutivo real vive en turnoGlobal — avanza siempre hacia adelante
+  // sin importar cuántos módulos atendieron ni en qué orden, por eso el
+  // "próximo turno" SIEMPRE es turnoGlobal + 1, nunca una posición relativa.
+  function actualizarTicker() {
+    const estado       = estadoTickerActual.estadoRaw;
+    const turnoGlobal  = estado?.turnoGlobal || 0;   // último número YA asignado
+    const hayPendiente = colaOrdenada.length > 0;     // ¿hay algo esperando ser llamado?
+
+    const anterior  = turnoGlobal > 1 ? turnoGlobal - 1 : 0;  // el llamado antes del actual
+    const actual    = turnoGlobal;                             // el último llamado/asignado
+    const siguiente = turnoGlobal + 1;                         // el próximo consecutivo a generar/llamar
+
+    const elAnterior  = document.getElementById('ticker-anterior').querySelector('.ticker-numero');
+    const elActual    = document.getElementById('ticker-actual').querySelector('.ticker-numero');
+    const elSiguiente = document.getElementById('ticker-siguiente').querySelector('.ticker-numero');
+
+    elAnterior.textContent  = anterior > 0 ? 'T-' + pad3(anterior) : '—';
+    elActual.textContent    = actual   > 0 ? 'T-' + pad3(actual)   : '—';
+    // Siempre el consecutivo real, exista o no algo en la cola todavía
+    elSiguiente.textContent = 'T-' + pad3(siguiente);
+
+    // Animar relevo si el turno actual cambió
+    if (ultimoTurnoActualTicker !== null && actual !== ultimoTurnoActualTicker && actual > 0) {
+      const track = document.getElementById('ticker-track');
+      track.classList.add('deslizar');
+      setTimeout(() => track.classList.remove('deslizar'), 550);
+    }
+    ultimoTurnoActualTicker = actual;
+  }
+
+  // ── TICKER 2: PRÓXIMO turno a asignar en Recepción (cualquier dispositivo) ──
+  // El centro muestra el próximo número que se generará (posición #total+1).
+  // A la izquierda, desvanecido, el último que SÍ se asignó (el más reciente
+  // generado en /cola, con o sin folio aún). Útil para confirmar que todos
+  // los dispositivos de Recepción ven la misma cuenta en tiempo real.
+  let ultimoTotalModuloTicker = null;
+
+  function actualizarTickerModulo() {
+    const total = colaTodos.length;   // cantidad total de turnos generados hasta ahora
+    const elAnt  = document.getElementById('ticker-modulo-anterior').querySelector('.ticker-numero');
+    const elAct  = document.getElementById('ticker-modulo-actual').querySelector('.ticker-numero');
+    const elRest = document.getElementById('ticker-modulo-pendientes').querySelector('.ticker-numero');
+
+    // colaTodos viene ordenado por ts ascendente → el último elemento es el
+    // más reciente generado (el "último asignado").
+    const masReciente = total > 0 ? colaTodos[total - 1] : null;
+
+    const textoUltimoAsignado = masReciente
+      ? (masReciente.turno ? 'T-' + pad3(masReciente.turno) : '#' + total)
+      : '—';
+
+    // El PRÓXIMO a asignar es simplemente el siguiente lugar en la fila de
+    // generación: total + 1 (todavía no existe en /cola, se crea al confirmar).
+    const textoProximo = '#' + (total + 1);
+
+    elAnt.textContent  = textoUltimoAsignado;
+    elAct.textContent  = textoProximo;
+    elRest.textContent = colaPendienteCount;
+
+    // Animar relevo cuando cambia el total (se generó un turno nuevo)
+    if (ultimoTotalModuloTicker !== null && total !== ultimoTotalModuloTicker) {
+      const track = document.getElementById('ticker-track-modulo');
+      track.classList.add('deslizar');
+      setTimeout(() => track.classList.remove('deslizar'), 550);
+    }
+    ultimoTotalModuloTicker = total;
+  }
+
+  onValue(estadoRef, snap => {
+    estadoTickerActual.estadoRaw = snap.val();
+    actualizarTicker();
+    actualizarTickerModulo();
+  });
+
+  // ── Renderizar selector de trámites ──────────────────────────────────────
+  const tramGrid = document.getElementById('tramites-grid');
+  TRAMITES.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'tramite-card';
+    div.id = 'tram-card-' + t.id;
+    div.style.setProperty('--tramite-color', t.color);
+    div.style.setProperty('--tramite-color-dim', t.colorDim);
+    div.innerHTML = `
+      <div class="tramite-icono">${t.icono}</div>
+      <div class="tramite-texto">
+        <div class="tramite-nombre">${t.nombre}</div>
+        <div class="tramite-desc">${t.desc}</div>
+      </div>
+      <div class="tramite-check">✓</div>
+    `;
+    div.onclick = () => seleccionarTramite(t.id, t.nombre);
+    tramGrid.appendChild(div);
+  });
+
+  function seleccionarTramite(id, nombre) {
+    tramiteSel = id;
+    document.querySelectorAll('.tramite-card').forEach(el => el.classList.remove('selec'));
+    document.getElementById('tram-card-' + id).classList.add('selec');
+    document.getElementById('resumen-tramite').textContent = nombre;
+    document.getElementById('resumen-tramite').classList.remove('vacio');
+    actualizarBoton();
+  }
+
+  function actualizarBoton() {
+    document.getElementById('btn-confirmar').disabled = !tramiteSel;
+  }
+
+  // ── Contador de nota ──────────────────────────────────────────────────────
+  document.getElementById('nota-input').addEventListener('input', function() {
+    document.getElementById('nota-contador').textContent = this.value.length + '/120';
+  });
+
+  // ── Confirmar y generar turno ────────────────────────────────────────────
+  // El turno se agrega al final de la cola general (FIFO), SIN módulo asignado.
+  // Cualquier operador disponible tomará el siguiente en orden, sin importar
+  // su módulo. El número definitivo y el avance de turnoGlobal los asigna
+  // operador.html al presionar "Llamar siguiente".
+  window.confirmarTurno = async function() {
+    if (!tramiteSel) return;
+    const btn = document.getElementById('btn-confirmar');
+    btn.disabled = true;
+    btn.textContent = '⟳ Generando...';
+
+    const tramiteObj = TRAMITES.find(t => t.id === tramiteSel);
+    const nota = document.getElementById('nota-input').value.trim();
+
+    try {
+      await push(colaRef, {
+        tramiteId:     tramiteSel,
+        tramiteNombre: tramiteObj.nombre,
+        tramiteIcono:  tramiteObj.icono,
+        nota:          nota || null,
+        ts:            Date.now(),
+        atendido:      false,
+        turno:         null   // se asigna cuando operador.html lo llame
+      });
+
+      mostrarExito(colaPendienteCount + 1, tramiteObj.nombre);
+    } catch (err) {
+      console.error('Error al generar turno:', err);
+      alert('Ocurrió un error al generar el turno. Intenta de nuevo.');
+      btn.disabled = false;
+      btn.textContent = '🎫 Generar turno';
+    }
+  };
+
+  function mostrarExito(posicionEnFila, tramiteNombre) {
+    document.getElementById('exito-turno').textContent = '#' + posicionEnFila;
+    document.getElementById('exito-detalle').innerHTML =
+      `Trámite: <strong>${tramiteNombre}</strong><br>
+       <span style="font-size:11px;color:var(--texto-dim);">Posición en la fila de espera. El número de turno se asigna al ser llamado.</span>`;
+    document.getElementById('overlay-exito').classList.add('visible');
+  }
+
+  window.reiniciarFormulario = function() {
+    tramiteSel = null;
+    document.querySelectorAll('.tramite-card').forEach(el => el.classList.remove('selec'));
+    document.getElementById('resumen-tramite').textContent = 'Sin seleccionar';
+    document.getElementById('resumen-tramite').classList.add('vacio');
+    document.getElementById('nota-input').value = '';
+    document.getElementById('nota-contador').textContent = '0/120';
+    document.getElementById('btn-confirmar').disabled = true;
+    document.getElementById('btn-confirmar').textContent = '🎫 Generar turno';
+    document.getElementById('overlay-exito').classList.remove('visible');
+  };
+</script>
+</body>
+</html>
