@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turnero — Panel de Operador | AAC Coyoacán</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #0e1117;
+    --surface:     #161b27;
+    --surface-2:   #1c2333;
+    --surface-3:   #222b3e;
+    --borde:       #2a3550;
+    --borde-suave: #1e2a42;
+    --acento:      #3b82f6;
+    --acento-dim:  rgba(59,130,246,0.12);
+    --acento-glow: rgba(59,130,246,0.25);
+    --verde:       #10b981;
+    --verde-dim:   rgba(16,185,129,0.12);
+    --rojo:        #ef4444;
+    --rojo-dim:    rgba(239,68,68,0.12);
+    --naranja:     #f97316;
+    --naranja-dim: rgba(249,115,22,0.12);
+    --amarillo:    #f59e0b;
+    --texto:       #e2e8f0;
+    --texto-mid:   #94a3b8;
+    --texto-dim:   #475569;
+    --blanco:      #ffffff;
+    --radio:       12px;
+    --radio-lg:    18px;
+    --sombra:      0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+    min-height: 100vh;
+    line-height: 1.5;
+    /* Textura sutil de fondo */
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(59,130,246,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 110%, rgba(16,185,129,0.04) 0%, transparent 60%);
+  }
+
+  /* ─── SCROLLBAR ──────────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--borde); border-radius: 3px; }
+
+  /* ─── HEADER ─────────────────────────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(14,17,23,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--borde-suave);
+    padding: 0 clamp(16px, 4vw, 40px);
+    height: 62px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+  }
+  .header-izq { display: flex; align-items: center; gap: 14px; }
+  .header-logo-marca {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 600;
+    color: var(--blanco);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+  .header-sep {
+    width: 1px; height: 20px;
+    background: var(--borde);
+  }
+  .header-sub {
+    font-size: 11px; font-weight: 500;
+    color: var(--texto-dim);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .header-der { display: flex; align-items: center; gap: 10px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    padding: 4px 11px; border-radius: 20px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+  }
+  .chip-vivo {
+    background: rgba(239,68,68,0.12);
+    color: #f87171;
+    border-color: rgba(239,68,68,0.25);
+    animation: pulso-chip 2s ease-in-out infinite;
+  }
+  .chip-vivo::before { content: '●'; font-size: 7px; }
+  @keyframes pulso-chip {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+  }
+  .chip.conectado    { background: var(--verde-dim); color: #34d399; border-color: rgba(16,185,129,0.3); }
+  .chip.desconectado { background: var(--naranja-dim); color: var(--naranja); border-color: rgba(249,115,22,0.3); }
+  .chip.conectando   { background: rgba(71,85,105,0.2); color: var(--texto-dim); border-color: var(--borde); }
+
+  /* ─── LAYOUT ─────────────────────────────────────────────────────────────── */
+  .page {
+    padding: clamp(16px, 3vw, 32px) clamp(16px, 4vw, 40px);
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* ─── AVISO ──────────────────────────────────────────────────────────────── */
+  .aviso {
+    display: none;
+    align-items: center; gap: 10px;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: var(--radio);
+    padding: 12px 18px;
+    font-size: 13px; font-weight: 500;
+    color: var(--amarillo);
+  }
+  .aviso.visible { display: flex; }
+  .aviso::before { content: '⚠'; font-size: 15px; }
+
+  /* ─── CARD base ──────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-lg);
+    padding: clamp(16px, 2.5vw, 24px);
+    box-shadow: var(--sombra);
+    transition: border-color 0.2s;
+  }
+
+  /* ─── SELECTOR DE MÓDULO ─────────────────────────────────────────────────── */
+  .card-modulo {
+    display: flex; align-items: center; gap: 20px;
+    flex-wrap: wrap;
+  }
+  .modulo-label-texto {
+    font-size: 12px; font-weight: 600;
+    color: var(--texto-mid);
+    text-transform: uppercase; letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .select-wrap { position: relative; flex: 1; min-width: 200px; }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--texto-dim);
+    pointer-events: none; font-size: 13px;
+  }
+  .select-modulo {
+    width: 100%;
+    appearance: none; -webkit-appearance: none;
+    background: var(--surface-2);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 10px 36px 10px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    color: var(--texto);
+    cursor: pointer; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .select-modulo:focus {
+    border-color: var(--acento);
+    box-shadow: 0 0 0 3px var(--acento-dim);
+  }
+  .select-modulo option { background: var(--surface-2); }
+
+  /* ─── PANEL DE ESTADÍSTICAS ──────────────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 700px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 380px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .stat-card {
+    background: var(--surface-2);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.15s;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--acento);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .stat-card.activa::before { opacity: 1; }
+  .stat-card.activa { border-color: rgba(59,130,246,0.3); }
+
+  .stat-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--texto-dim); margin-bottom: 8px;
+  }
+  .stat-valor {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(22px, 3.5vw, 32px);
+    font-weight: 500;
+    color: var(--texto);
+    line-height: 1;
+  }
+  .stat-card.activa .stat-valor { color: var(--acento); }
+
+  /* Pulso en el siguiente turno */
+  .stat-valor-siguiente {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(22px, 3.5vw, 32px);
+    font-weight: 500;
+    line-height: 1;
+    display: inline-block;
+    color: var(--texto-dim);
+  }
+  .stat-valor-siguiente.activo {
+    color: var(--verde);
+    animation: latido 1.5s ease-in-out infinite;
+  }
+  @keyframes latido {
+    0%,100% { opacity: 1; transform: scale(1); }
+    45%      { opacity: 0.35; transform: scale(0.93); }
+  }
+
+  /* ─── BOTONES DE ACCIÓN ──────────────────────────────────────────────────── */
+  .acciones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 480px) {
+    .acciones-grid { grid-template-columns: 1fr; }
+  }
+
+  .btn-accion {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    border: none; border-radius: var(--radio);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    padding: 14px 20px;
+    transition: transform 0.12s, box-shadow 0.2s, opacity 0.2s, background 0.2s;
+    position: relative; overflow: hidden;
+    letter-spacing: 0.2px;
+  }
+  .btn-accion::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .btn-accion:hover::after  { opacity: 0.05; }
+  .btn-accion:active        { transform: scale(0.97); }
+  .btn-accion:active::after { opacity: 0.1; }
+  .btn-accion:disabled      { opacity: 0.3; cursor: not-allowed; transform: none; }
+  .btn-accion:disabled::after { display: none; }
+
+  /* Llamar — prominente, ancho completo */
+  .btn-llamar {
+    grid-column: 1 / -1;
+    background: var(--acento);
+    color: white;
+    font-size: clamp(15px, 2.5vw, 18px);
+    padding: clamp(16px, 2.5vw, 22px) 24px;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+  }
+  .btn-llamar:hover:not(:disabled) {
+    background: #2563eb;
+    box-shadow: 0 6px 28px rgba(59,130,246,0.5);
+  }
+  .btn-llamar .btn-icono {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* Regresar */
+  .btn-regresar {
+    background: var(--naranja-dim);
+    color: var(--naranja);
+    border: 1px solid rgba(249,115,22,0.3);
+  }
+  .btn-regresar:hover:not(:disabled) {
+    background: rgba(249,115,22,0.2);
+    border-color: rgba(249,115,22,0.5);
+  }
+
+  /* Reiniciar */
+  .btn-reset {
+    background: var(--rojo-dim);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.25);
+  }
+  .btn-reset:hover {
+    background: rgba(239,68,68,0.2);
+    border-color: rgba(239,68,68,0.4);
+  }
+
+  .btn-limpiar-cola {
+    background: var(--amarillo-dim, rgba(245,158,11,0.1));
+    color: var(--amarillo);
+    border: 1px solid rgba(245,158,11,0.3);
+    grid-column: 1 / -1;
+  }
+  .btn-limpiar-cola:hover {
+    background: rgba(245,158,11,0.2);
+    border-color: rgba(245,158,11,0.5);
+  }
+
+  /* ─── TARJETA PRÓXIMO TURNO EN ESPERA ────────────────────────────────────── */
+  .card-pendiente {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--acento-dim);
+    border-color: rgba(59,130,246,0.3);
+    animation: pendiente-glow 2.5s ease-in-out infinite;
+  }
+  @keyframes pendiente-glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    50%      { box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+  }
+  .pendiente-icono {
+    width: 48px; height: 48px; flex-shrink: 0;
+    background: var(--acento);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .pendiente-texto { flex: 1; min-width: 0; }
+  .pendiente-eyebrow {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--acento); margin-bottom: 3px;
+  }
+  .pendiente-nombre {
+    font-size: 16px; font-weight: 700;
+    color: var(--texto);
+  }
+  .pendiente-nota {
+    font-size: 12px; color: var(--texto-mid);
+    margin-top: 4px; line-height: 1.4;
+    font-style: italic;
+  }
+
+  /* ─── SECCIÓN TÍTULO ─────────────────────────────────────────────────────── */
+  .seccion-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .seccion-titulo {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--texto-dim);
+  }
+  .seccion-linea {
+    flex: 1; height: 1px;
+    background: var(--borde-suave);
+  }
+
+  /* ─── GRID DE MÓDULOS ────────────────────────────────────────────────────── */
+  .grid-modulos {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 700px) {
+    .grid-modulos { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 380px) {
+    .grid-modulos { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .tarjeta-modulo {
+    background: var(--surface-2);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio);
+    padding: 14px 10px 12px;
+    text-align: center;
+    position: relative;
+    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+  }
+  .tarjeta-modulo.activo {
+    border-color: rgba(59,130,246,0.35);
+    background: rgba(59,130,246,0.06);
+  }
+  .tarjeta-modulo.yo {
+    border-color: rgba(16,185,129,0.4);
+    background: rgba(16,185,129,0.06);
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.12);
+  }
+  .mod-nombre {
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--texto-dim); margin-bottom: 8px;
+  }
+  .tarjeta-modulo.yo .mod-nombre     { color: var(--verde); }
+  .tarjeta-modulo.activo .mod-nombre { color: var(--acento); }
+  .mod-turno {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(15px, 2.2vw, 20px);
+    font-weight: 500;
+    color: var(--texto);
+    line-height: 1;
+  }
+  .mod-turno.vacio { color: var(--borde); font-size: 14px; }
+  .tarjeta-modulo.yo .mod-turno { color: var(--verde); }
+  .mod-count {
+    font-size: 10px;
+    color: var(--texto-dim);
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .etiqueta-yo {
+    position: absolute; top: -1px; right: -1px;
+    background: var(--verde);
+    color: #052e16;
+    font-size: 8px; font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 0 var(--radio) 0 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ─── HISTORIAL ──────────────────────────────────────────────────────────── */
+  .historial-lista {
+    background: var(--surface-2);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio);
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .historial-vacio {
+    padding: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--texto-dim);
+  }
+  .historial-item {
+    display: grid;
+    grid-template-columns: 56px 72px 56px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--borde-suave);
+    transition: background 0.15s;
+  }
+  @media (max-width: 480px) {
+    .historial-item { grid-template-columns: 50px 60px 1fr; row-gap: 4px; }
+    .hi-tramite { grid-column: 1 / -1; order: 5; }
+  }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-item:hover { background: var(--surface-3); }
+  .hi-hora {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--texto-dim);
+  }
+  .hi-mod {
+    font-size: 11px; font-weight: 700;
+    color: var(--acento);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .hi-turno {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px; font-weight: 500;
+    color: var(--texto);
+  }
+  .hi-tramite {
+    font-size: 11px; color: var(--texto-mid);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hi-tipo {
+    font-size: 9px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .hi-tipo.regresar {
+    background: var(--naranja-dim);
+    color: var(--naranja);
+    border: 1px solid rgba(249,115,22,0.3);
+  }
+
+  /* ─── FOOTER ─────────────────────────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 10px;
+    color: var(--texto-dim);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-top: 1px solid var(--borde-suave);
+    margin-top: 8px;
+  }
+
+  /* ─── PANTALLA DE LOGIN ──────────────────────────────────────────────────── */
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 110%, rgba(16,185,129,0.05) 0%, transparent 60%);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.4s ease;
+  }
+  .login-overlay.oculto {
+    opacity: 0; pointer-events: none;
+  }
+  .login-caja {
+    background: var(--surface);
+    border: 1px solid var(--borde);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: min(400px, 90vw);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    animation: login-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes login-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+  }
+  .login-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--blanco); margin-bottom: 4px;
+  }
+  .login-sub {
+    font-size: 11px; color: var(--texto-dim);
+    letter-spacing: 0.8px; text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .login-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--texto-dim); margin-bottom: 10px;
+    display: block;
+  }
+  .login-input-wrap { position: relative; margin-bottom: 10px; }
+  .login-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 13px 44px 13px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--texto); outline: none;
+    letter-spacing: 6px; text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .login-input:focus {
+    border-color: var(--acento);
+    box-shadow: 0 0 0 3px var(--acento-dim);
+  }
+  .login-input.error {
+    border-color: var(--rojo);
+    box-shadow: 0 0 0 3px var(--rojo-dim);
+    animation: sacudir 0.4s ease;
+  }
+  @keyframes sacudir {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(5px); }
+  }
+  .login-ojo {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--texto-dim); cursor: pointer;
+    font-size: 16px; padding: 4px;
+    transition: color 0.2s;
+  }
+  .login-ojo:hover { color: var(--acento); }
+  .login-error {
+    font-size: 12px; color: var(--rojo);
+    min-height: 18px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .login-error.visible { opacity: 1; }
+  .login-btn {
+    width: 100%;
+    background: var(--acento);
+    color: white; border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.3px;
+    transition: background 0.2s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+  }
+  .login-btn:hover  { background: #2563eb; box-shadow: 0 6px 24px rgba(59,130,246,0.45); }
+  .login-btn:active { opacity: 0.85; transform: scale(0.99); }
+  .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .login-intentos {
+    text-align: center; margin-top: 16px;
+    font-size: 11px; color: var(--texto-dim);
+  }
+  .login-bloqueado {
+    background: var(--rojo-dim);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px; padding: 14px 16px;
+    font-size: 12px; color: #f87171;
+    text-align: center; line-height: 1.6;
+    display: none; margin-top: 12px;
+  }
+  .login-bloqueado.visible { display: block; }
+  .login-conectando {
+    text-align: center; padding: 16px 0;
+    font-size: 12px; color: var(--texto-dim);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .spin {
+    display: inline-block;
+    animation: girar-spin 1s linear infinite;
+  }
+  @keyframes girar-spin { to { transform: rotate(360deg); } }
+
+  /* Ocultar panel principal mientras no hay sesión */
+  .page-principal { display: none; }
+  .page-principal.activo { display: block; }
+  header.principal { display: none; }
+  header.principal.activo { display: flex; }
+  footer.principal { display: none; }
+  footer.principal.activo { display: block; }
+
+  /* ─── ANIMACIÓN ENTRADA ──────────────────────────────────────────────────── */
+  .card, .stats-grid, .acciones-grid {
+    animation: entrada 0.4s ease both;
+  }
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.10s; }
+  .card:nth-child(3) { animation-delay: 0.15s; }
+  .card:nth-child(4) { animation-delay: 0.20s; }
+  @keyframes entrada {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── PANTALLA DE LOGIN ──────────────────────────────────────────────────── -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-caja">
+    <div class="login-logo">AAC Coyoacán</div>
+    <div class="login-sub">Panel de Operador · Acceso restringido</div>
+
+    <!-- Estado: verificando conexión -->
+    <div class="login-conectando" id="login-conectando">
+      <span class="spin">⟳</span> Verificando conexión con Firebase...
+    </div>
+
+    <!-- Formulario de acceso -->
+    <div id="login-form" style="display:none;">
+      <label class="login-label">Contraseña de acceso</label>
+      <div class="login-input-wrap">
+        <input class="login-input" id="login-input" type="password"
+               placeholder="••••••" maxlength="30"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               onkeydown="if(event.key==='Enter') verificarAcceso()">
+        <button class="login-ojo" id="login-ojo" onclick="toggleVerContrasena()" tabindex="-1" title="Mostrar/ocultar">👁</button>
+      </div>
+      <div class="login-error" id="login-error">⚠ Contraseña incorrecta</div>
+      <button class="login-btn" id="login-btn" onclick="verificarAcceso()">
+        Ingresar al sistema
+      </button>
+      <div class="login-intentos" id="login-intentos"></div>
+      <div class="login-bloqueado" id="login-bloqueado">
+        🔒 Acceso bloqueado por múltiples intentos fallidos.<br>
+        Espera <span id="login-cuenta">60</span> segundos para intentar de nuevo.
+      </div>
+    </div>
+
+    <!-- Error de conexión -->
+    <div id="login-sin-conexion" style="display:none; text-align:center; color:var(--rojo); font-size:12px; line-height:1.7;">
+      ✖ Sin conexión con Firebase.<br>
+      Verifica tu conexión a internet e intenta de nuevo.<br><br>
+      <button onclick="location.reload()" style="background:var(--rojo-dim);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:12px;">
+        Reintentar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PANEL PRINCIPAL (oculto hasta autenticarse) ─────────────────────────── -->
+<header class="principal">
+  <div class="header-izq">
+    <span class="header-logo-marca">AAC Coyoacán</span>
+    <div class="header-sep"></div>
+    <span class="header-sub">Panel de Operador</span>
+  </div>
+  <div class="header-der">
+    <div class="chip conectando" id="badge-conexion">⟳ Conectando</div>
+    <div class="chip chip-vivo">En vivo</div>
+  </div>
+</header>
+
+<div class="page page-principal">
+
+  <!-- Aviso -->
+  <div class="aviso" id="aviso-modulo">Selecciona tu módulo antes de operar el turnero.</div>
+
+  <!-- Selector de módulo -->
+  <div class="card card-modulo">
+    <span class="modulo-label-texto">Módulo asignado</span>
+    <div class="select-wrap">
+      <select class="select-modulo" id="sel-modulo">
+        <option value="">— Seleccionar módulo —</option>
+        <option value="1">Módulo 1</option>
+        <option value="2">Módulo 2</option>
+        <option value="3">Módulo 3</option>
+        <option value="4">Módulo 4</option>
+        <option value="5">Módulo 5</option>
+        <option value="6">Módulo 6</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card" id="stat-mi-modulo">
+      <div class="stat-label">Mi módulo</div>
+      <div class="stat-valor" id="mi-modulo-num">—</div>
+    </div>
+    <div class="stat-card" id="stat-turno-actual">
+      <div class="stat-label">Atendiendo ahora</div>
+      <div class="stat-valor" id="mi-turno-actual">—</div>
+    </div>
+    <div class="stat-card" id="stat-siguiente">
+      <div class="stat-label">Siguiente turno</div>
+      <div class="stat-valor">
+        <span class="stat-valor-siguiente" id="turno-siguiente">—</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Atendidos hoy</div>
+      <div class="stat-valor" id="total-atendidos">0</div>
+    </div>
+  </div>
+
+  <!-- Próximo turno en espera (asignado desde Recepción) -->
+  <div class="card card-pendiente" id="card-pendiente" style="display:none;">
+    <div class="pendiente-icono" id="pendiente-icono">📋</div>
+    <div class="pendiente-texto">
+      <div class="pendiente-eyebrow" id="pendiente-eyebrow">Próximo turno en espera</div>
+      <div class="pendiente-nombre" id="pendiente-nombre">Trámite</div>
+      <div class="pendiente-nota" id="pendiente-nota" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Botones de acción -->
+  <div class="acciones-grid">
+    <button class="btn-accion btn-llamar" id="btn-llamar" onclick="llamarSiguiente()" disabled>
+      <span class="btn-icono">▶</span>
+      Llamar siguiente turno
+    </button>
+    <button class="btn-accion btn-regresar" id="btn-regresar" onclick="regresarTurno()" disabled>
+      ◀ Regresar turno
+    </button>
+    <button class="btn-accion btn-reset" onclick="reiniciarTurnos()">
+      ↺ Reiniciar contador general
+    </button>
+    <button class="btn-accion btn-limpiar-cola" onclick="limpiarColaPendiente()">
+      🧹 Vaciar fila de espera (sin reiniciar contador)
+    </button>
+  </div>
+
+  <!-- Grid de módulos -->
+  <div class="card" style="padding: clamp(16px,2.5vw,24px);">
+    <div class="seccion-header">
+      <span class="seccion-titulo">Estado de módulos</span>
+      <div class="seccion-linea"></div>
+    </div>
+    <div class="grid-modulos" id="grid-modulos"></div>
+  </div>
+
+  <!-- Historial -->
+  <div class="card" style="padding: clamp(16px,2.5vw,24px);">
+    <div class="seccion-header">
+      <span class="seccion-titulo">Historial de llamadas</span>
+      <div class="seccion-linea"></div>
+    </div>
+    <div class="historial-lista" id="historial-lista">
+      <div class="historial-vacio">Sin actividad aún</div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="principal">Sistema de Turnos Digital · SGÍA · AAC Coyoacán · Firebase Realtime Database</footer>
+
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, push, update, runTransaction, query, orderByChild, limitToLast, get }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    projectId:   "turnero-aac-coyoacan",
+    databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
+  };
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const MODS = 6;
+
+  let miModulo        = null;
+  let estadoActual    = null;
+  let historialActual = [];
+
+  const estadoRef    = ref(db, 'estado');
+  const historialRef = ref(db, 'historial');
+  const accesoRef    = ref(db, 'config/acceso');
+  const colaRef       = ref(db, 'cola');
+  const contadorRecepcionRef = ref(db, 'config/ultimoNumeroRecepcion');
+
+  // ── AUTENTICACIÓN ──────────────────────────────────────────────────────────
+  const MAX_INTENTOS = 5;
+  const BLOQUEO_SEG  = 60;
+  const SESION_KEY   = 'turnero_sesion_ok';
+
+  let intentosFallidos    = 0;
+  let bloqueadoHasta      = 0;
+  let cuentaRegresivaTimer = null;
+
+  if (sessionStorage.getItem(SESION_KEY) === '1') {
+    mostrarPanel();
+    iniciarOperador();
+  } else {
+    iniciarLogin();
+  }
+
+  function iniciarLogin() {
+    let timeoutConn = setTimeout(() => {
+      document.getElementById('login-conectando').style.display = 'none';
+      document.getElementById('login-sin-conexion').style.display = 'block';
+    }, 8000);
+    onValue(ref(db, '.info/connected'), snap => {
+      if (snap.val()) {
+        clearTimeout(timeoutConn);
+        document.getElementById('login-conectando').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+        setTimeout(() => document.getElementById('login-input').focus(), 100);
+      }
+    });
+  }
+
+  window.verificarAcceso = async function() {
+    const ahora = Date.now();
+    if (ahora < bloqueadoHasta) return;
+    const inputEl   = document.getElementById('login-input');
+    const btnEl     = document.getElementById('login-btn');
+    const ingresada = inputEl.value.trim();
+    if (!ingresada) { mostrarErrorLogin('Ingresa la contraseña.'); return; }
+    btnEl.disabled    = true;
+    btnEl.textContent = '⟳ Verificando...';
+    try {
+      const snap   = await get(accesoRef);
+      const config = snap.val();
+      if (!config || !config.password) {
+        mostrarErrorLogin('Contraseña no configurada. Sigue el paso de configuración inicial.');
+        btnEl.disabled = false; btnEl.textContent = 'Ingresar al sistema';
+        return;
+      }
+      if (ingresada === config.password) {
+        intentosFallidos = 0;
+        sessionStorage.setItem(SESION_KEY, '1');
+        const ov = document.getElementById('login-overlay');
+        ov.classList.add('oculto');
+        setTimeout(() => { ov.style.display = 'none'; mostrarPanel(); iniciarOperador(); }, 400);
+      } else {
+        intentosFallidos++;
+        inputEl.value = '';
+        inputEl.classList.add('error');
+        setTimeout(() => inputEl.classList.remove('error'), 600);
+        const restantes = MAX_INTENTOS - intentosFallidos;
+        if (intentosFallidos >= MAX_INTENTOS) {
+          bloquearAcceso();
+        } else {
+          mostrarErrorLogin('Contraseña incorrecta. ' + restantes + ' intento' + (restantes !== 1 ? 's' : '') + ' restante' + (restantes !== 1 ? 's' : '') + '.');
+          document.getElementById('login-intentos').textContent = 'Intentos fallidos: ' + intentosFallidos + ' / ' + MAX_INTENTOS;
+        }
+        btnEl.disabled = false; btnEl.textContent = 'Ingresar al sistema';
+      }
+    } catch(err) {
+      mostrarErrorLogin('Error de conexión. Intenta de nuevo.');
+      btnEl.disabled = false; btnEl.textContent = 'Ingresar al sistema';
+    }
+  };
+
+  function bloquearAcceso() {
+    bloqueadoHasta = Date.now() + BLOQUEO_SEG * 1000;
+    const bloqueoEl = document.getElementById('login-bloqueado');
+    const cuentaEl  = document.getElementById('login-cuenta');
+    const btnEl     = document.getElementById('login-btn');
+    document.getElementById('login-error').classList.remove('visible');
+    bloqueoEl.classList.add('visible');
+    btnEl.disabled = true;
+    let seg = BLOQUEO_SEG;
+    cuentaEl.textContent = seg;
+    if (cuentaRegresivaTimer) clearInterval(cuentaRegresivaTimer);
+    cuentaRegresivaTimer = setInterval(() => {
+      seg--;
+      cuentaEl.textContent = seg;
+      if (seg <= 0) {
+        clearInterval(cuentaRegresivaTimer);
+        bloqueoEl.classList.remove('visible');
+        btnEl.disabled = false; btnEl.textContent = 'Ingresar al sistema';
+        intentosFallidos = 0;
+        document.getElementById('login-intentos').textContent = '';
+        document.getElementById('login-input').focus();
+      }
+    }, 1000);
+  }
+
+  function mostrarErrorLogin(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = '⚠ ' + msg;
+    el.classList.add('visible');
+    setTimeout(() => el.classList.remove('visible'), 4000);
+  }
+
+  window.toggleVerContrasena = function() {
+    const inp = document.getElementById('login-input');
+    const ojo = document.getElementById('login-ojo');
+    if (inp.type === 'password') { inp.type = 'text';     ojo.textContent = '🙈'; }
+    else                          { inp.type = 'password'; ojo.textContent = '👁'; }
+  };
+
+  function mostrarPanel() {
+    document.querySelector('header.principal').classList.add('activo');
+    document.querySelector('.page-principal').classList.add('activo');
+    document.querySelector('footer.principal').classList.add('activo');
+  }
+
+  function iniciarOperador() {
+    // ── Conexión (badge del panel) ─────────────────────────────────────────
+    onValue(ref(db, '.info/connected'), snap => {
+      const b = document.getElementById('badge-conexion');
+      if (snap.val()) { b.textContent = '✔ Conectado';   b.className = 'chip conectado'; }
+      else            { b.textContent = '✖ Sin conexión'; b.className = 'chip desconectado'; }
+    });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function moduloVacio(id) { return { id, turnoActual: 0, turnoAnterior: 0, totalAtendidos: 0 }; }
+  function estadoInicial() {
+    const mods = {};
+    for (let i = 1; i <= MODS; i++) mods[i] = moduloVacio(i);
+    return { turnoGlobal: 0, repeticion: 0, modulos: mods, ultimaActualizacion: Date.now() };
+  }
+  function pad(n)       { return String(n).padStart(3, '0'); }
+  function turnoStr(t)  { return (t && t > 0) ? `T-${pad(t)}` : '—'; }
+  function horaActual() { return new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
+  function mostrarAviso() {
+    const av = document.getElementById('aviso-modulo');
+    av.classList.add('visible');
+    setTimeout(() => av.classList.remove('visible'), 3000);
+  }
+
+  // ── Escuchar estado ────────────────────────────────────────────────────────
+  onValue(estadoRef, snap => {
+    estadoActual = snap.val() || estadoInicial();
+    renderizar();
+  });
+
+  // ── Escuchar historial ─────────────────────────────────────────────────────
+  onValue(query(historialRef, orderByChild('ts'), limitToLast(30)), snap => {
+    historialActual = [];
+    snap.forEach(child => historialActual.push(child.val()));
+    historialActual.reverse();
+    renderizarHistorial();
+  });
+
+  // ── Escuchar cola (turnos asignados desde Recepción, sin atender) ───────────
+  // Se ordena por ts (orden de llegada) para tomar siempre el más antiguo primero.
+  let colaCompleta = [];   // [{key, modulo, tramiteNombre, tramiteIcono, nota, ts}, ...]
+  onValue(query(colaRef, orderByChild('ts')), snap => {
+    colaCompleta = [];
+    snap.forEach(child => {
+      const v = child.val();
+      if (!v.atendido) colaCompleta.push({ key: child.key, ...v });
+    });
+    renderizarPendiente();
+  });
+
+  // Turno más antiguo en cola asignado a mi módulo (o sin módulo si tu flujo es general)
+  function siguientePendiente() {
+    if (!miModulo) return null;
+    return colaCompleta.find(c => !c.modulo || c.modulo === miModulo) || null;
+  }
+
+  function renderizarPendiente() {
+    const card = document.getElementById('card-pendiente');
+    if (!card) return;
+    const pend = siguientePendiente();
+    if (!miModulo || !pend) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'flex';
+    document.getElementById('pendiente-icono').textContent  = pend.tramiteIcono  || '📋';
+    document.getElementById('pendiente-nombre').textContent = pend.tramiteNombre || 'Trámite';
+    const notaEl = document.getElementById('pendiente-nota');
+    if (pend.nota) { notaEl.textContent = '📝 ' + pend.nota; notaEl.style.display = 'block'; }
+    else            { notaEl.style.display = 'none'; }
+  }
+
+  // ── 1. LLAMAR SIGUIENTE ────────────────────────────────────────────────────
+  // Si hay un turno pendiente en /cola para este módulo (asignado desde
+  // Recepción con su trámite), se consume y se le asigna el número definitivo.
+  // Si no hay ninguno, se genera un turno normal sin trámite específico.
+  window.llamarSiguiente = async function() {
+    if (!miModulo) { mostrarAviso(); return; }
+    const btn = document.getElementById('btn-llamar');
+    btn.disabled = true;
+
+    const pendiente = siguientePendiente();
+
+    try {
+      const resultado = await runTransaction(estadoRef, current => {
+        if (!current) return estadoInicial();
+        current.turnoGlobal = (current.turnoGlobal || 0) + 1;
+        if (!current.modulos)           current.modulos = {};
+        if (!current.modulos[miModulo]) current.modulos[miModulo] = moduloVacio(miModulo);
+        const mod = current.modulos[miModulo];
+        mod.turnoAnterior  = mod.turnoActual || 0;
+        mod.turnoActual    = current.turnoGlobal;
+        mod.totalAtendidos = (mod.totalAtendidos || 0) + 1;
+        current.ultimaActualizacion = Date.now();
+        return current;
+      });
+      if (resultado.committed && resultado.snapshot.exists()) {
+        const turnoFinal = resultado.snapshot.val().turnoGlobal;
+
+        const entradaHistorial = {
+          hora: horaActual(), modulo: miModulo,
+          turno: turnoFinal, ts: Date.now(), tipo: 'llamada'
+        };
+        if (pendiente) {
+          entradaHistorial.tramiteNombre = pendiente.tramiteNombre;
+          entradaHistorial.tramiteIcono  = pendiente.tramiteIcono;
+          if (pendiente.nota) entradaHistorial.nota = pendiente.nota;
+        }
+        await push(historialRef, entradaHistorial);
+
+        // Marcar el turno de la cola como atendido y asignarle el número final
+        if (pendiente) {
+          await update(ref(db, 'cola/' + pendiente.key), {
+            atendido: true,
+            turno: turnoFinal
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error al llamar turno:', err);
+      alert('Ocurrió un error al llamar el turno. Intenta de nuevo.');
+    } finally {
+      btn.disabled = !miModulo;
+    }
+  };
+
+  // ── 2. REGRESAR TURNO ─────────────────────────────────────────────────────
+  window.regresarTurno = async function() {
+    if (!miModulo || !estadoActual) return;
+    const mod = estadoActual.modulos?.[miModulo];
+    if (!mod || !mod.turnoActual || mod.turnoActual === 0) return;
+    if (!confirm(`¿Regresar al turno anterior? Se cancelará T-${pad(mod.turnoActual)} del Módulo ${miModulo}.`)) return;
+
+    const btn = document.getElementById('btn-regresar');
+    btn.disabled = true;
+    try {
+      const resultado = await runTransaction(estadoRef, current => {
+        if (!current) return current;
+        if (!current.modulos?.[miModulo]) return current;
+        const mod = current.modulos[miModulo];
+        const turnoACancelar = mod.turnoActual;
+        mod.turnoActual    = mod.turnoAnterior || 0;
+        mod.turnoAnterior  = 0;
+        mod.totalAtendidos = Math.max((mod.totalAtendidos || 1) - 1, 0);
+        if (current.turnoGlobal === turnoACancelar) {
+          current.turnoGlobal = Math.max((current.turnoGlobal || 1) - 1, 0);
+        }
+        current.ultimaActualizacion = Date.now();
+        return current;
+      });
+      if (resultado.committed) {
+        await push(historialRef, {
+          hora: horaActual(), modulo: miModulo,
+          turno: mod.turnoActual, ts: Date.now(), tipo: 'regresar'
+        });
+      }
+    } catch(err) {
+      console.error('Error al regresar turno:', err);
+    } finally {
+      btn.disabled = !miModulo;
+    }
+  };
+
+  // ── 2b. LIMPIAR SOLO LA COLA (sin tocar contador ni historial) ─────────────
+  // Útil cuando la fila de Recepción quedó con turnos viejos o de prueba,
+  // sin necesidad de reiniciar todo el turnero.
+  window.limpiarColaPendiente = async function() {
+    if (!confirm('¿Vaciar la fila de espera de Recepción?\n\nEsto NO afecta el contador de turnos ni el historial, solo borra los trámites pendientes sin atender.')) return;
+    await set(colaRef, null);
+  };
+
+  // ── 3. REINICIAR ──────────────────────────────────────────────────────────
+  // IMPORTANTE: también se limpia /cola. Si no se hace, los turnos generados
+  // desde Recepción antes del reinicio quedan "vivos" con su orden viejo y
+  // se desincronizan del nuevo contador (turnoGlobal) que vuelve a cero.
+  window.reiniciarTurnos = async function() {
+    const primera = confirm('⚠️ ¿Reiniciar el turnero?\n\nEsta acción borrará todos los contadores, el historial Y la fila de espera de Recepción (todos los módulos). No se puede deshacer.');
+    if (!primera) return;
+    const segunda = confirm('¿Confirmas que deseas reiniciar? Esta es tu última oportunidad para cancelar.');
+    if (!segunda) return;
+    await set(estadoRef,    estadoInicial());
+    await set(historialRef, null);
+    await set(colaRef,      null);
+    await set(contadorRecepcionRef, 0);  // sin esto, Recepción seguiría arrastrando el número viejo
+  };
+
+  // ── Render principal ───────────────────────────────────────────────────────
+  function renderizar() {
+    const estado = estadoActual;
+    if (!estado) return;
+
+    const activo = !!miModulo;
+    document.getElementById('btn-llamar').disabled   = !activo;
+    document.getElementById('btn-regresar').disabled = !activo;
+
+    // Stats cards
+    const statMod      = document.getElementById('stat-mi-modulo');
+    const statActual   = document.getElementById('stat-turno-actual');
+    const statSig      = document.getElementById('stat-siguiente');
+    const sigEl        = document.getElementById('turno-siguiente');
+
+    if (miModulo) {
+      const mod = estado.modulos?.[miModulo];
+      document.getElementById('mi-modulo-num').textContent    = `Mód. ${miModulo}`;
+      document.getElementById('mi-turno-actual').textContent  = turnoStr(mod?.turnoActual);
+      document.getElementById('total-atendidos').textContent  = mod?.totalAtendidos ?? 0;
+      sigEl.textContent = `T-${pad((estado.turnoGlobal || 0) + 1)}`;
+      sigEl.classList.add('activo');
+      statMod.classList.add('activa');
+      statActual.classList.add('activa');
+      statSig.classList.add('activa');
+    } else {
+      document.getElementById('mi-modulo-num').textContent   = '—';
+      document.getElementById('mi-turno-actual').textContent = '—';
+      document.getElementById('total-atendidos').textContent = '0';
+      sigEl.textContent = '—';
+      sigEl.classList.remove('activo');
+      statMod.classList.remove('activa');
+      statActual.classList.remove('activa');
+      statSig.classList.remove('activa');
+    }
+
+    // Grid módulos
+    const grid = document.getElementById('grid-modulos');
+    grid.innerHTML = '';
+    for (let i = 1; i <= MODS; i++) {
+      const mod    = estado.modulos?.[i] || moduloVacio(i);
+      const esYo   = i === miModulo;
+      const activo = mod.turnoActual && mod.turnoActual > 0;
+      const div    = document.createElement('div');
+      div.className = `tarjeta-modulo${esYo ? ' yo' : (activo ? ' activo' : '')}`;
+      div.innerHTML = `
+        ${esYo ? '<span class="etiqueta-yo">yo</span>' : ''}
+        <div class="mod-nombre">Módulo ${i}</div>
+        <div class="mod-turno${activo ? '' : ' vacio'}">${turnoStr(mod.turnoActual)}</div>
+        <div class="mod-count">${mod.totalAtendidos ?? 0} atendidos</div>
+      `;
+      grid.appendChild(div);
+    }
+  }
+
+  // ── Render historial ───────────────────────────────────────────────────────
+  function renderizarHistorial() {
+    const lista = document.getElementById('historial-lista');
+    if (!historialActual.length) {
+      lista.innerHTML = '<div class="historial-vacio">Sin actividad aún</div>';
+      return;
+    }
+    lista.innerHTML = historialActual.map(h => {
+      const badge = h.tipo === 'regresar'
+        ? '<span class="hi-tipo regresar">Regresó</span>' : '';
+      const tramite = h.tramiteNombre
+        ? `<span class="hi-tramite">${h.tramiteIcono || '📋'} ${h.tramiteNombre}</span>` : '';
+      return `
+        <div class="historial-item">
+          <span class="hi-hora">${h.hora}</span>
+          <span class="hi-mod">Mód. ${h.modulo}</span>
+          <span class="hi-turno">T-${pad(h.turno)}</span>
+          ${tramite}
+          ${badge}
+        </div>`;
+    }).join('');
+  }
+
+  // ── Selector ───────────────────────────────────────────────────────────────
+  document.getElementById('sel-modulo').addEventListener('change', function() {
+    miModulo = this.value ? parseInt(this.value) : null;
+    renderizar();
+    renderizarPendiente();
+  });
+
+  } // ── fin de iniciarOperador() ─────────────────────────────────────────────
+</script>
+</body>
+</html>
