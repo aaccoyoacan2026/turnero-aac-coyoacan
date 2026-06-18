@@ -587,7 +587,7 @@
 <script type="module">
   import { initializeApp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, push, query, orderByChild }
+  import { getDatabase, ref, onValue, push, query, orderByChild, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -598,8 +598,9 @@
   const db  = getDatabase(app);
   const MODS = 6;
 
-  const estadoRef = ref(db, 'estado');
-  const colaRef    = ref(db, 'cola');
+  const estadoRef   = ref(db, 'estado');
+  const colaRef     = ref(db, 'cola');
+  const contadorRef = ref(db, 'config/ultimoNumeroRecepcion');  // contador atómico compartido
 
   // ── Catálogo de trámites ─────────────────────────────────────────────────
   const TRAMITES = [
@@ -677,31 +678,50 @@
     ultimoTurnoActualTicker = actual;
   }
 
-  // ── TICKER 2: PRÓXIMO turno a asignar en Recepción (cualquier dispositivo) ──
-  // El próximo número NUNCA puede ser menor a lo que los módulos ya llamaron
-  // (turnoGlobal). Si los operadores van adelante de Recepción —por ejemplo
-  // porque alguno generó turnos fuera de este flujo, o por algún desfase—
-  // Recepción debe "alcanzar" ese número y continuar desde ahí, en lugar de
-  // seguir contando solo desde sus propios registros en /cola.
-  //
-  // Próximo a asignar = max(turnos ya generados en /cola, turnoGlobal) + 1
+  // ── CONTADOR ATÓMICO COMPARTIDO (config/ultimoNumeroRecepcion) ─────────────
+  // PROBLEMA QUE RESUELVE: si solo calculamos max(colaTodos.length, turnoGlobal)
+  // en el momento de mostrar, el número "se pega" — cada turno nuevo generado
+  // vuelve a caer en el mismo máximo hasta que colaTodos.length lo supere por
+  // sí solo. La solución es un contador real que avanza con cada turno Y que
+  // también "salta" hacia adelante si detecta que turnoGlobal ya lo superó,
+  // guardando ese avance en Firebase para que TODOS los dispositivos lo vean
+  // igual de inmediato (no solo el que generó el salto).
+  let contadorActual = 0;   // espejo local del contador en Firebase, solo lectura
+  onValue(contadorRef, snap => {
+    contadorActual = snap.val() || 0;
+    actualizarTickerModulo();
+  });
+
   let ultimoProximoTicker = null;
 
-  function siguienteRealRecepcion() {
-    const total       = colaTodos.length;                          // generados por Recepción
-    const turnoGlobal = estadoTickerActual.estadoRaw?.turnoGlobal || 0;  // ya llamado por módulos
-    return Math.max(total, turnoGlobal) + 1;
+  // Solo LECTURA — usado por el ticker para mostrar, nunca reserva nada.
+  // Si turnoGlobal ya superó al contador local, mostramos ese valor más alto
+  // de inmediato (aunque el contador real en Firebase se sincronice un
+  // instante después mediante la transacción de abajo).
+  function siguienteRealRecepcionSoloLectura() {
+    const turnoGlobal = estadoTickerActual.estadoRaw?.turnoGlobal || 0;
+    return Math.max(contadorActual, turnoGlobal) + 1;
+  }
+
+  // Avanza el contador de forma ATÓMICA y devuelve el número recién asignado.
+  // Si turnoGlobal venía adelantado, el contador "salta" a ese nivel primero
+  // y luego avanza uno más — quedando ya sincronizado para el siguiente turno.
+  async function reservarSiguienteNumero() {
+    const turnoGlobal = estadoTickerActual.estadoRaw?.turnoGlobal || 0;
+    const resultado = await runTransaction(contadorRef, actual => {
+      const base = Math.max(actual || 0, turnoGlobal);
+      return base + 1;
+    });
+    return resultado.snapshot.val();
   }
 
   function actualizarTickerModulo() {
-    const total  = colaTodos.length;
     const elAnt  = document.getElementById('ticker-modulo-anterior').querySelector('.ticker-numero');
     const elAct  = document.getElementById('ticker-modulo-actual').querySelector('.ticker-numero');
     const elRest = document.getElementById('ticker-modulo-pendientes').querySelector('.ticker-numero');
 
-    const proximo = siguienteRealRecepcion();
+    const proximo = siguienteRealRecepcionSoloLectura();
 
-    // El "último asignado" mostrado a la izquierda es simplemente proximo - 1
     const textoUltimoAsignado = proximo > 1 ? 'T-' + pad3(proximo - 1) : '—';
     const textoProximo        = 'T-' + pad3(proximo);
 
@@ -709,7 +729,6 @@
     elAct.textContent  = textoProximo;
     elRest.textContent = colaPendienteCount;
 
-    // Animar relevo cuando cambia el próximo número (se generó/llamó un turno)
     if (ultimoProximoTicker !== null && proximo !== ultimoProximoTicker) {
       const track = document.getElementById('ticker-track-modulo');
       track.classList.add('deslizar');
@@ -777,11 +796,11 @@
     const tramiteObj = TRAMITES.find(t => t.id === tramiteSel);
     const nota = document.getElementById('nota-input').value.trim();
 
-    // Calcular el número real ANTES de insertar, para mostrarlo en el mensaje.
-    // Es el mismo número que ocupará este turno una vez generado.
-    const numeroAsignado = siguienteRealRecepcion();
-
     try {
+      // Reservar el número de forma ATÓMICA — esto avanza el contador real
+      // en Firebase, evitando que se repita en el siguiente turno generado.
+      const numeroAsignado = await reservarSiguienteNumero();
+
       await push(colaRef, {
         tramiteId:     tramiteSel,
         tramiteNombre: tramiteObj.nombre,
