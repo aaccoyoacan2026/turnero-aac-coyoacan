@@ -678,41 +678,44 @@
   }
 
   // ── TICKER 2: PRÓXIMO turno a asignar en Recepción (cualquier dispositivo) ──
-  // El centro muestra el próximo número que se generará (posición #total+1).
-  // A la izquierda, desvanecido, el último que SÍ se asignó (el más reciente
-  // generado en /cola, con o sin folio aún). Útil para confirmar que todos
-  // los dispositivos de Recepción ven la misma cuenta en tiempo real.
-  let ultimoTotalModuloTicker = null;
+  // El próximo número NUNCA puede ser menor a lo que los módulos ya llamaron
+  // (turnoGlobal). Si los operadores van adelante de Recepción —por ejemplo
+  // porque alguno generó turnos fuera de este flujo, o por algún desfase—
+  // Recepción debe "alcanzar" ese número y continuar desde ahí, en lugar de
+  // seguir contando solo desde sus propios registros en /cola.
+  //
+  // Próximo a asignar = max(turnos ya generados en /cola, turnoGlobal) + 1
+  let ultimoProximoTicker = null;
+
+  function siguienteRealRecepcion() {
+    const total       = colaTodos.length;                          // generados por Recepción
+    const turnoGlobal = estadoTickerActual.estadoRaw?.turnoGlobal || 0;  // ya llamado por módulos
+    return Math.max(total, turnoGlobal) + 1;
+  }
 
   function actualizarTickerModulo() {
-    const total = colaTodos.length;   // cantidad total de turnos generados hasta ahora
+    const total  = colaTodos.length;
     const elAnt  = document.getElementById('ticker-modulo-anterior').querySelector('.ticker-numero');
     const elAct  = document.getElementById('ticker-modulo-actual').querySelector('.ticker-numero');
     const elRest = document.getElementById('ticker-modulo-pendientes').querySelector('.ticker-numero');
 
-    // colaTodos viene ordenado por ts ascendente → el último elemento es el
-    // más reciente generado (el "último asignado").
-    const masReciente = total > 0 ? colaTodos[total - 1] : null;
+    const proximo = siguienteRealRecepcion();
 
-    const textoUltimoAsignado = masReciente
-      ? (masReciente.turno ? 'T-' + pad3(masReciente.turno) : '#' + total)
-      : '—';
-
-    // El PRÓXIMO a asignar es simplemente el siguiente lugar en la fila de
-    // generación: total + 1 (todavía no existe en /cola, se crea al confirmar).
-    const textoProximo = '#' + (total + 1);
+    // El "último asignado" mostrado a la izquierda es simplemente proximo - 1
+    const textoUltimoAsignado = proximo > 1 ? 'T-' + pad3(proximo - 1) : '—';
+    const textoProximo        = 'T-' + pad3(proximo);
 
     elAnt.textContent  = textoUltimoAsignado;
     elAct.textContent  = textoProximo;
     elRest.textContent = colaPendienteCount;
 
-    // Animar relevo cuando cambia el total (se generó un turno nuevo)
-    if (ultimoTotalModuloTicker !== null && total !== ultimoTotalModuloTicker) {
+    // Animar relevo cuando cambia el próximo número (se generó/llamó un turno)
+    if (ultimoProximoTicker !== null && proximo !== ultimoProximoTicker) {
       const track = document.getElementById('ticker-track-modulo');
       track.classList.add('deslizar');
       setTimeout(() => track.classList.remove('deslizar'), 550);
     }
-    ultimoTotalModuloTicker = total;
+    ultimoProximoTicker = proximo;
   }
 
   onValue(estadoRef, snap => {
@@ -762,8 +765,9 @@
   // ── Confirmar y generar turno ────────────────────────────────────────────
   // El turno se agrega al final de la cola general (FIFO), SIN módulo asignado.
   // Cualquier operador disponible tomará el siguiente en orden, sin importar
-  // su módulo. El número definitivo y el avance de turnoGlobal los asigna
-  // operador.html al presionar "Llamar siguiente".
+  // su módulo. El mensaje muestra el número REAL que le corresponde (el mismo
+  // que calcula el ticker: max(generados en cola, turnoGlobal) + 1), no una
+  // posición relativa dentro de la cola local.
   window.confirmarTurno = async function() {
     if (!tramiteSel) return;
     const btn = document.getElementById('btn-confirmar');
@@ -773,6 +777,10 @@
     const tramiteObj = TRAMITES.find(t => t.id === tramiteSel);
     const nota = document.getElementById('nota-input').value.trim();
 
+    // Calcular el número real ANTES de insertar, para mostrarlo en el mensaje.
+    // Es el mismo número que ocupará este turno una vez generado.
+    const numeroAsignado = siguienteRealRecepcion();
+
     try {
       await push(colaRef, {
         tramiteId:     tramiteSel,
@@ -781,10 +789,10 @@
         nota:          nota || null,
         ts:            Date.now(),
         atendido:      false,
-        turno:         null   // se asigna cuando operador.html lo llame
+        turno:         null   // el folio final lo confirma operador.html al llamarlo
       });
 
-      mostrarExito(colaPendienteCount + 1, tramiteObj.nombre);
+      mostrarExito(numeroAsignado, tramiteObj.nombre);
     } catch (err) {
       console.error('Error al generar turno:', err);
       alert('Ocurrió un error al generar el turno. Intenta de nuevo.');
@@ -793,11 +801,11 @@
     }
   };
 
-  function mostrarExito(posicionEnFila, tramiteNombre) {
-    document.getElementById('exito-turno').textContent = '#' + posicionEnFila;
+  function mostrarExito(numeroTurno, tramiteNombre) {
+    document.getElementById('exito-turno').textContent = 'T-' + pad3(numeroTurno);
     document.getElementById('exito-detalle').innerHTML =
       `Trámite: <strong>${tramiteNombre}</strong><br>
-       <span style="font-size:11px;color:var(--texto-dim);">Posición en la fila de espera. El número de turno se asigna al ser llamado.</span>`;
+       <span style="font-size:11px;color:var(--texto-dim);">Este es el número que le corresponde en la fila de espera.</span>`;
     document.getElementById('overlay-exito').classList.add('visible');
   }
 
