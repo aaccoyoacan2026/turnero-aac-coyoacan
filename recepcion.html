@@ -466,9 +466,146 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  /* ── PANTALLA DE LOGIN (válida 24h, guardada en localStorage) ──────────── */
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: var(--bg);
+    background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(59,130,246,0.07) 0%, transparent 60%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    transition: opacity 0.4s ease;
+  }
+  .login-overlay.oculto { opacity: 0; pointer-events: none; }
+  .login-caja {
+    background: var(--surface);
+    border: 1px solid var(--borde-suave);
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: min(380px, 100%);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    animation: login-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    text-align: center;
+  }
+  @keyframes login-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .login-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 19px; font-weight: 600;
+    color: var(--blanco); margin-bottom: 4px;
+  }
+  .login-sub {
+    font-size: 11px; color: var(--texto-dim);
+    letter-spacing: 0.6px; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .login-input-wrap { position: relative; margin-bottom: 10px; }
+  .login-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 12px;
+    padding: 14px 46px 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--texto); outline: none;
+    letter-spacing: 6px; text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .login-input:focus { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-dim); }
+  .login-input.error { border-color: var(--rojo); animation: sacudir 0.4s ease; }
+  @keyframes sacudir {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(5px); }
+  }
+  .login-ojo {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--texto-dim);
+    cursor: pointer; font-size: 16px; padding: 4px;
+  }
+  .login-error {
+    font-size: 12px; color: var(--rojo);
+    min-height: 18px; margin-bottom: 12px;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .login-error.visible { opacity: 1; }
+  .login-btn {
+    width: 100%;
+    background: var(--acento); color: white; border: none;
+    border-radius: 12px; padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+    transition: background 0.2s, opacity 0.2s;
+  }
+  .login-btn:hover  { background: #2563eb; }
+  .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .login-intentos { font-size: 11px; color: var(--texto-dim); margin-top: 14px; }
+  .login-bloqueado {
+    background: var(--rojo-dim); border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #f87171;
+    margin-top: 12px; display: none; line-height: 1.6;
+  }
+  .login-bloqueado.visible { display: block; }
+  .login-conectando {
+    font-size: 12px; color: var(--texto-dim);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 0;
+  }
+  .login-spin { display: inline-block; animation: login-spin 1s linear infinite; }
+  @keyframes login-spin { to { transform: rotate(360deg); } }
+  .login-vigencia {
+    font-size: 10px; color: var(--texto-dim);
+    margin-top: 18px; line-height: 1.5;
+  }
+
+  /* Ocultar contenido principal hasta autenticar */
+  body.sin-auth header,
+  body.sin-auth .ticker-wrap,
+  body.sin-auth main,
+  body.sin-auth .barra-inferior { display: none; }
 </style>
 </head>
-<body>
+<body class="sin-auth">
+
+<!-- ── PANTALLA DE LOGIN (válida 24h en este dispositivo) ─────────────────── -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-caja">
+    <div class="login-logo">AAC Coyoacán</div>
+    <div class="login-sub">Recepción · Acceso restringido</div>
+
+    <div class="login-conectando" id="login-conectando">
+      <span class="login-spin">⟳</span> Verificando conexión...
+    </div>
+
+    <div id="login-form" style="display:none;">
+      <div class="login-input-wrap">
+        <input class="login-input" id="login-input" type="password"
+               placeholder="••••••" maxlength="30"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               onkeydown="if(event.key==='Enter') verificarAccesoRecepcion()">
+        <button class="login-ojo" id="login-ojo" onclick="toggleVerPassRecepcion()" tabindex="-1">👁</button>
+      </div>
+      <div class="login-error" id="login-error">⚠ Contraseña incorrecta</div>
+      <button class="login-btn" id="login-btn" onclick="verificarAccesoRecepcion()">Ingresar</button>
+      <div class="login-intentos" id="login-intentos"></div>
+      <div class="login-bloqueado" id="login-bloqueado">
+        🔒 Acceso bloqueado por intentos fallidos.<br>
+        Espera <span id="login-cuenta">60</span> segundos.
+      </div>
+      <div class="login-vigencia">El acceso se guarda en este dispositivo<br>y solo se pedirá de nuevo al día siguiente.</div>
+    </div>
+
+    <div id="login-sin-conexion" style="display:none; font-size:12px; color:var(--rojo); line-height:1.7;">
+      ✖ Sin conexión con Firebase.<br>
+      <button onclick="location.reload()" style="background:var(--rojo-dim);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:12px;margin-top:10px;">Reintentar</button>
+    </div>
+  </div>
+</div>
 
 <header>
   <div>
@@ -587,7 +724,7 @@
 <script type="module">
   import { initializeApp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, push, query, orderByChild, runTransaction }
+  import { getDatabase, ref, onValue, push, query, orderByChild, runTransaction, get }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -601,6 +738,131 @@
   const estadoRef   = ref(db, 'estado');
   const colaRef     = ref(db, 'cola');
   const contadorRef = ref(db, 'config/ultimoNumeroRecepcion');  // contador atómico compartido
+  const accesoRef   = ref(db, 'config/acceso');                 // misma contraseña que operador.html
+
+  // ── AUTENTICACIÓN — válida 24h, guardada en localStorage de este dispositivo ─
+  const LOGIN_KEY     = 'recepcion_acceso_fecha';   // guarda la fecha (YYYY-MM-DD) del último login exitoso
+  const MAX_INTENTOS  = 5;
+  const BLOQUEO_SEG   = 60;
+  let intentosFallidos = 0;
+  let bloqueadoHasta   = 0;
+  let cuentaRegresivaTimer = null;
+
+  function hoyStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function sesionVigente() {
+    return localStorage.getItem(LOGIN_KEY) === hoyStr();
+  }
+
+  function ocultarLogin() {
+    document.body.classList.remove('sin-auth');
+    const ov = document.getElementById('login-overlay');
+    ov.classList.add('oculto');
+    setTimeout(() => { ov.style.display = 'none'; }, 400);
+  }
+
+  if (sesionVigente()) {
+    ocultarLogin();
+  } else {
+    // Verificar conexión antes de mostrar el formulario
+    let timeoutConn = setTimeout(() => {
+      document.getElementById('login-conectando').style.display = 'none';
+      document.getElementById('login-sin-conexion').style.display = 'block';
+    }, 8000);
+    onValue(ref(db, '.info/connected'), snap => {
+      if (snap.val()) {
+        clearTimeout(timeoutConn);
+        document.getElementById('login-conectando').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+        setTimeout(() => document.getElementById('login-input').focus(), 100);
+      }
+    });
+  }
+
+  window.toggleVerPassRecepcion = function() {
+    const inp = document.getElementById('login-input');
+    const ojo = document.getElementById('login-ojo');
+    if (inp.type === 'password') { inp.type = 'text';     ojo.textContent = '🙈'; }
+    else                          { inp.type = 'password'; ojo.textContent = '👁'; }
+  };
+
+  window.verificarAccesoRecepcion = async function() {
+    if (Date.now() < bloqueadoHasta) return;
+    const inputEl   = document.getElementById('login-input');
+    const btnEl     = document.getElementById('login-btn');
+    const ingresada = inputEl.value.trim();
+    if (!ingresada) { mostrarErrorLoginRecepcion('Ingresa la contraseña.'); return; }
+
+    btnEl.disabled = true;
+    btnEl.textContent = '⟳ Verificando...';
+
+    try {
+      const snap   = await get(accesoRef);
+      const config = snap.val();
+      if (!config || !config.password) {
+        mostrarErrorLoginRecepcion('Contraseña no configurada en Firebase.');
+        btnEl.disabled = false; btnEl.textContent = 'Ingresar';
+        return;
+      }
+
+      if (ingresada === config.password) {
+        intentosFallidos = 0;
+        localStorage.setItem(LOGIN_KEY, hoyStr());
+        ocultarLogin();
+      } else {
+        intentosFallidos++;
+        inputEl.value = '';
+        inputEl.classList.add('error');
+        setTimeout(() => inputEl.classList.remove('error'), 600);
+        const restantes = MAX_INTENTOS - intentosFallidos;
+        if (intentosFallidos >= MAX_INTENTOS) {
+          bloquearAccesoRecepcion();
+        } else {
+          mostrarErrorLoginRecepcion('Contraseña incorrecta. ' + restantes + ' intento' + (restantes!==1?'s':'') + ' restante' + (restantes!==1?'s':'') + '.');
+          document.getElementById('login-intentos').textContent = 'Intentos fallidos: ' + intentosFallidos + ' / ' + MAX_INTENTOS;
+        }
+        btnEl.disabled = false; btnEl.textContent = 'Ingresar';
+      }
+    } catch(err) {
+      mostrarErrorLoginRecepcion('Error de conexión. Intenta de nuevo.');
+      btnEl.disabled = false; btnEl.textContent = 'Ingresar';
+    }
+  };
+
+  function bloquearAccesoRecepcion() {
+    bloqueadoHasta = Date.now() + BLOQUEO_SEG * 1000;
+    const bloqueoEl = document.getElementById('login-bloqueado');
+    const cuentaEl  = document.getElementById('login-cuenta');
+    const btnEl     = document.getElementById('login-btn');
+    document.getElementById('login-error').classList.remove('visible');
+    bloqueoEl.classList.add('visible');
+    btnEl.disabled = true;
+    let seg = BLOQUEO_SEG;
+    cuentaEl.textContent = seg;
+    if (cuentaRegresivaTimer) clearInterval(cuentaRegresivaTimer);
+    cuentaRegresivaTimer = setInterval(() => {
+      seg--;
+      cuentaEl.textContent = seg;
+      if (seg <= 0) {
+        clearInterval(cuentaRegresivaTimer);
+        bloqueoEl.classList.remove('visible');
+        btnEl.disabled = false; btnEl.textContent = 'Ingresar';
+        intentosFallidos = 0;
+        document.getElementById('login-intentos').textContent = '';
+        document.getElementById('login-input').focus();
+      }
+    }, 1000);
+  }
+
+  function mostrarErrorLoginRecepcion(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = '⚠ ' + msg;
+    el.classList.add('visible');
+    setTimeout(() => el.classList.remove('visible'), 4000);
+  }
 
   // ── Catálogo de trámites ─────────────────────────────────────────────────
   const TRAMITES = [
