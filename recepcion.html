@@ -4,589 +4,508 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Recepción — Generar Turno | AAC Coyoacán</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@500;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:          #0e1117;
-    --surface:     #161b27;
-    --surface-2:   #1c2333;
-    --surface-3:   #222b3e;
-    --borde:       #2a3550;
-    --borde-suave: #1e2a42;
-    --acento:      #3b82f6;
-    --acento-dim:  rgba(59,130,246,0.12);
-    --acento-glow: rgba(59,130,246,0.3);
-    --verde:       #10b981;
-    --verde-dim:   rgba(16,185,129,0.12);
-    --rojo:        #ef4444;
-    --rojo-dim:    rgba(239,68,68,0.12);
-    --naranja:     #f97316;
-    --naranja-dim: rgba(249,115,22,0.12);
-    --morado:      #a855f7;
-    --morado-dim:  rgba(168,85,247,0.12);
-    --amarillo:    #f59e0b;
-    --amarillo-dim: rgba(245,158,11,0.12);
-    --texto:       #e2e8f0;
-    --texto-mid:   #94a3b8;
-    --texto-dim:   #475569;
-    --blanco:      #ffffff;
-  }
+/* ── TOKENS ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:      #0b0f1a;
+  --glass:   rgba(255,255,255,0.05);
+  --glass-b: rgba(255,255,255,0.10);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-border-hover: rgba(255,255,255,0.22);
+  --blur: blur(18px);
+  --blur-sm: blur(10px);
+  --acento:   #3b82f6;
+  --acento-d: rgba(59,130,246,0.18);
+  --verde:    #10b981;
+  --verde-d:  rgba(16,185,129,0.15);
+  --rojo:     #ef4444;
+  --rojo-d:   rgba(239,68,68,0.15);
+  --amarillo: #f59e0b;
+  --morado:   #a855f7;
+  --texto:    #e2e8f0;
+  --texto-m:  #94a3b8;
+  --texto-d:  #475569;
+  --radio:    14px;
+  --radio-lg: 20px;
+}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0;
+  -webkit-tap-highlight-color:transparent; }
 
-  html, body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--texto);
-    min-height: 100vh;
-    line-height: 1.5;
-    overflow-x: hidden;
-    background-image:
-      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(59,130,246,0.07) 0%, transparent 60%);
-    -webkit-user-select: none;
-    user-select: none;
-  }
+html,body {
+  font-family:'DM Sans',sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 15% 10%, rgba(59,130,246,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(16,185,129,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 60% at 60% 40%, rgba(168,85,247,0.05) 0%, transparent 60%);
+  min-height: 100vh;
+  color: var(--texto);
+  overflow-x: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+input,textarea { -webkit-user-select:text; user-select:text; }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:2px; }
 
-  input, textarea { -webkit-user-select: text; user-select: text; }
+/* ── MIXIN GLASS ─────────────────────────────────────────────────────────── */
+.glass {
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+}
 
-  /* ── HEADER ──────────────────────────────────────────────────────────────── */
-  header {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(14,17,23,0.92);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--borde-suave);
-    padding: 14px clamp(16px, 4vw, 28px);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px; font-weight: 600;
-    color: var(--blanco);
-  }
-  .logo-sub {
-    font-size: 10px; color: var(--texto-dim);
-    text-transform: uppercase; letter-spacing: 0.8px;
-    margin-top: 1px;
-  }
-  .chip {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; font-weight: 500;
-    padding: 4px 11px; border-radius: 20px;
-    letter-spacing: 0.4px;
-  }
-  .chip.conectado    { background: var(--verde-dim);   color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
-  .chip.desconectado { background: var(--naranja-dim); color: var(--naranja); border: 1px solid rgba(249,115,22,0.3); }
-  .chip.conectando   { background: rgba(71,85,105,0.2); color: var(--texto-dim); border: 1px solid var(--borde); }
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════════════════════════════════════════ */
+.login-overlay {
+  position:fixed; inset:0; z-index:500;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(59,130,246,0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 75% 80%, rgba(16,185,129,0.06) 0%, transparent 55%);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  transition: opacity 0.4s ease;
+}
+.login-overlay.oculto { opacity:0; pointer-events:none; }
 
-  /* ── TICKER DE SINCRONIZACIÓN ───────────────────────────────────────────── */
-  .ticker-wrap {
-    position: relative;
-    background: var(--surface);
-    border-bottom: 1px solid var(--borde-suave);
-    padding: 14px clamp(16px, 4vw, 28px) 16px;
-    overflow: hidden;
-  }
-  .ticker-eyebrow {
-    font-size: 9px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px;
-    color: var(--texto-dim);
-    text-align: center;
-    margin-bottom: 10px;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .ticker-eyebrow .dot {
-    width: 5px; height: 5px; border-radius: 50%;
-    background: var(--verde);
-    animation: dot-pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes dot-pulse {
-    0%,100% { opacity: 1;   transform: scale(1); }
-    50%      { opacity: 0.4; transform: scale(0.7); }
-  }
+.login-caja {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radio-lg);
+  padding: 36px 28px;
+  width: min(380px, 100%);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  animation: login-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+  text-align:center;
+}
+@keyframes login-in {
+  from { opacity:0; transform:translateY(20px) scale(0.96); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.login-logo { font-family:'Playfair Display',serif; font-size:19px; font-weight:600; color:#fff; margin-bottom:4px; }
+.login-sub  { font-size:10px; color:var(--texto-d); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:28px; }
 
-  .ticker-track {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(10px, 3vw, 22px);
-    position: relative;
-  }
+.login-input-wrap { position:relative; margin-bottom:10px; }
+.login-input {
+  width:100%; background:rgba(255,255,255,0.04);
+  border:1.5px solid var(--glass-border); border-radius:12px;
+  padding:14px 46px 14px 16px;
+  font-family:'DM Sans',sans-serif; font-size:22px; font-weight:700;
+  color:var(--texto); outline:none; letter-spacing:6px; text-align:center;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.login-input:focus { border-color:var(--acento); box-shadow:0 0 0 3px rgba(59,130,246,0.18); }
+.login-input.error { border-color:var(--rojo); animation:sacudir 0.4s ease; }
+@keyframes sacudir {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+}
+.login-ojo {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  background:none; border:none; color:var(--texto-d); cursor:pointer; font-size:16px; padding:4px;
+}
+.login-error { font-size:12px; color:var(--rojo); min-height:18px; margin-bottom:12px; opacity:0; transition:opacity 0.2s; }
+.login-error.visible { opacity:1; }
+.login-btn {
+  width:100%; background:var(--acento); color:#fff; border:none; border-radius:12px;
+  padding:14px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700;
+  cursor:pointer; box-shadow:0 4px 16px rgba(59,130,246,0.35); transition:background 0.2s, opacity 0.2s;
+}
+.login-btn:hover { background:#2563eb; }
+.login-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.login-intentos  { font-size:11px; color:var(--texto-d); margin-top:14px; }
+.login-bloqueado { background:var(--rojo-d); border:1px solid rgba(239,68,68,0.3);
+  border-radius:10px; padding:12px 14px; font-size:12px; color:#f87171;
+  margin-top:12px; display:none; line-height:1.6; }
+.login-bloqueado.visible { display:block; }
+.login-conectando { font-size:12px; color:var(--texto-d);
+  display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 0; }
+.login-spin { display:inline-block; animation:login-spin 1s linear infinite; }
+@keyframes login-spin { to { transform:rotate(360deg); } }
+.login-vigencia { font-size:10px; color:var(--texto-d); margin-top:18px; line-height:1.5; }
 
-  /* Flechas decorativas de flujo */
-  .ticker-flecha {
-    font-size: 13px;
-    color: var(--texto-dim);
-    flex-shrink: 0;
-    opacity: 0.5;
-  }
+body.sin-auth header,
+body.sin-auth .layout-body { display:none; }
 
-  .ticker-card {
-    flex-shrink: 0;
-    text-align: center;
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
-  }
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADER
+════════════════════════════════════════════════════════════════════════════ */
+header {
+  position:sticky; top:0; z-index:100;
+  background: rgba(11,15,26,0.7);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 12px clamp(16px,3vw,28px);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.logo     { font-family:'Playfair Display',serif; font-size:16px; color:#fff; }
+.logo-sub { font-size:10px; color:var(--texto-d); text-transform:uppercase; letter-spacing:0.7px; margin-top:2px; }
+.chip { font-family:'DM Mono',monospace; font-size:9px; font-weight:600;
+  padding:4px 10px; border-radius:20px; letter-spacing:0.4px; border:1px solid transparent; }
+.chip.conectado    { background:var(--verde-d); color:#34d399; border-color:rgba(16,185,129,0.3); }
+.chip.desconectado { background:var(--rojo-d);  color:var(--rojo); border-color:rgba(239,68,68,0.3); }
+.chip.conectando   { background:rgba(71,85,105,0.2); color:var(--texto-d); border-color:var(--glass-border); }
 
-  /* Tarjeta lateral: turno ya asignado (izquierda) — desvanecida */
-  .ticker-card.lateral {
-    opacity: 0.38;
-    transform: scale(0.78);
-  }
-  .ticker-card.lateral .ticker-numero {
-    font-size: clamp(20px, 4vw, 28px);
-    color: var(--texto-mid);
-  }
-  .ticker-card.lateral .ticker-label {
-    font-size: 8px;
-    color: var(--texto-dim);
-  }
-
-  /* Tarjeta central: turno en asignación — destacada */
-  .ticker-card.central {
-    opacity: 1;
-    transform: scale(1);
-    position: relative;
-  }
-  .ticker-card.central::before {
-    content: '';
-    position: absolute;
-    inset: -10px -16px;
-    background: var(--acento-dim);
-    border: 1px solid rgba(59,130,246,0.35);
-    border-radius: 16px;
-    z-index: -1;
-    animation: central-glow 2s ease-in-out infinite;
-  }
-  @keyframes central-glow {
-    0%,100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.25); }
-    50%      { box-shadow: 0 0 0 6px rgba(59,130,246,0.08); }
-  }
-  .ticker-card.central .ticker-numero {
-    font-family: 'DM Mono', monospace;
-    font-size: clamp(30px, 7vw, 42px);
-    font-weight: 800;
-    color: var(--blanco);
-    line-height: 1;
-  }
-  .ticker-card.central .ticker-label {
-    font-size: 9px; font-weight: 700;
-    color: var(--acento);
-    text-transform: uppercase; letter-spacing: 1px;
-    margin-top: 4px;
-  }
-
-  .ticker-numero {
-    font-family: 'DM Mono', monospace;
-    font-weight: 700;
-    line-height: 1;
-  }
-  .ticker-label {
-    font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.6px;
-    margin-top: 4px;
-  }
-
-  /* Animación de relevo: cuando cambia el turno, todo se desliza a la izquierda */
-  .ticker-track.deslizar .ticker-card.lateral.izq  { transform: scale(0.6) translateX(-30px); opacity: 0; }
-  .ticker-track.deslizar .ticker-card.central       { transform: scale(0.78) translateX(-40px); opacity: 0.38; }
-  .ticker-track.deslizar .ticker-card.lateral.der  { transform: scale(1) translateX(-40px); opacity: 1; }
-
-  /* ── Segundo ticker: variante verde (atención en módulo) ────────────────── */
-  .ticker-wrap-modulo {
-    border-top: 1px solid var(--borde-suave);
-  }
-  .dot-verde { background: var(--verde); }
-
-  .ticker-card.central.central-verde::before {
-    background: var(--verde-dim);
-    border-color: rgba(16,185,129,0.35);
-    animation: central-glow-verde 2s ease-in-out infinite;
-  }
-  @keyframes central-glow-verde {
-    0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.25); }
-    50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0.08); }
-  }
-  .ticker-card.central.central-verde .ticker-numero { color: var(--blanco); }
-  .ticker-card.central.central-verde .ticker-label  { color: var(--verde); }
-
-  /* ── MAIN ────────────────────────────────────────────────────────────────── */
-  main {
-    padding: clamp(16px, 4vw, 28px);
-    max-width: 600px;
-    margin: 0 auto;
-    padding-bottom: 140px; /* espacio para el botón flotante */
-  }
-
-  .paso {
-    margin-bottom: 28px;
-  }
-  .paso-header {
-    display: flex; align-items: baseline; gap: 10px;
-    margin-bottom: 14px;
-  }
-  .paso-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; font-weight: 700;
-    color: var(--acento);
-    background: var(--acento-dim);
-    border-radius: 50%;
-    width: 22px; height: 22px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .paso-titulo {
-    font-size: 13px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.8px;
-    color: var(--texto-mid);
-  }
-
-  /* ── Selector de módulo: chips grandes táctiles ─────────────────────────── */
-  .modulos-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  .modulo-chip {
-    background: var(--surface);
-    border: 1.5px solid var(--borde-suave);
-    border-radius: 14px;
-    padding: 18px 8px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .modulo-chip:active { transform: scale(0.96); }
-  .modulo-chip.selec {
-    border-color: var(--acento);
-    background: var(--acento-dim);
-    box-shadow: 0 0 0 1px var(--acento) inset;
-  }
-  .modulo-chip-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 24px; font-weight: 700;
-    color: var(--texto-mid);
-  }
-  .modulo-chip.selec .modulo-chip-num { color: var(--acento); }
-  .modulo-chip-label {
-    font-size: 9px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    color: var(--texto-dim);
-    margin-top: 4px;
-  }
-  .modulo-chip.selec .modulo-chip-label { color: var(--acento); }
-
-  /* ── Selector de trámite: tarjetas grandes ──────────────────────────────── */
-  .tramites-grid {
-    display: grid;
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT BODY — dos columnas en tablet/desktop, una columna en móvil
+════════════════════════════════════════════════════════════════════════════ */
+.layout-body {
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: auto 1fr;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+@media (max-width: 720px) {
+  .layout-body {
     grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-rows: auto 1fr;
+    height: auto;
+    overflow: visible;
   }
-  .tramite-card {
-    background: var(--surface);
-    border: 1.5px solid var(--borde-suave);
-    border-radius: 14px;
-    padding: 16px 18px;
-    display: flex; align-items: center; gap: 14px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .tramite-card:active { transform: scale(0.98); }
-  .tramite-card.selec {
-    border-color: var(--tramite-color, var(--acento));
-    background: var(--tramite-color-dim, var(--acento-dim));
-    box-shadow: 0 0 0 1px var(--tramite-color, var(--acento)) inset;
-  }
-  .tramite-icono {
-    width: 44px; height: 44px; flex-shrink: 0;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    background: var(--surface-2);
-  }
-  .tramite-card.selec .tramite-icono {
-    background: var(--tramite-color, var(--acento));
-  }
-  .tramite-texto { flex: 1; }
-  .tramite-nombre {
-    font-size: 15px; font-weight: 700;
-    color: var(--texto);
-  }
-  .tramite-desc {
-    font-size: 11px; color: var(--texto-dim);
-    margin-top: 2px;
-  }
-  .tramite-check {
-    width: 22px; height: 22px; flex-shrink: 0;
-    border-radius: 50%;
-    border: 2px solid var(--borde);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; color: transparent;
-    transition: all 0.15s ease;
-  }
-  .tramite-card.selec .tramite-check {
-    background: var(--tramite-color, var(--acento));
-    border-color: var(--tramite-color, var(--acento));
-    color: white;
-  }
+}
 
-  /* ── Campo de notas opcional ─────────────────────────────────────────────── */
-  .nota-wrap { position: relative; }
-  .nota-input {
-    width: 100%;
-    background: var(--surface);
-    border: 1.5px solid var(--borde-suave);
-    border-radius: 14px;
-    padding: 14px 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px; color: var(--texto);
-    outline: none; resize: none;
-    min-height: 60px;
-    transition: border-color 0.2s;
-  }
-  .nota-input:focus { border-color: var(--acento); }
-  .nota-input::placeholder { color: var(--texto-dim); }
-  .nota-contador {
-    position: absolute; bottom: 10px; right: 14px;
-    font-size: 10px; color: var(--texto-dim);
-    font-family: 'DM Mono', monospace;
-  }
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLUMNA IZQUIERDA — tickers fijos
+════════════════════════════════════════════════════════════════════════════ */
+.col-izq {
+  border-right: 1px solid var(--glass-border);
+  overflow-y: auto;
+  display:flex; flex-direction:column; gap:0;
+}
+@media (max-width: 720px) {
+  .col-izq { border-right:none; border-bottom:1px solid var(--glass-border); overflow:visible; }
+}
 
-  /* ── Resumen ─────────────────────────────────────────────────────────────── */
-  .resumen-card {
-    background: var(--surface-2);
-    border: 1px solid var(--borde-suave);
-    border-radius: 14px;
-    padding: 16px 18px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .resumen-fila {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 13px;
-  }
-  .resumen-label { color: var(--texto-dim); font-weight: 600; }
-  .resumen-valor { color: var(--texto); font-weight: 700; text-align: right; }
-  .resumen-valor.vacio { color: var(--texto-dim); font-weight: 500; }
+/* ── Tickers ─────────────────────────────────────────────────────────────── */
+.ticker-wrap {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.ticker-eyebrow {
+  font-size:9px; font-weight:700; text-transform:uppercase;
+  letter-spacing:1px; color:var(--texto-d);
+  display:flex; align-items:center; gap:6px;
+  margin-bottom:14px;
+}
+.dot { width:5px; height:5px; border-radius:50%; background:var(--acento); animation:dot-p 1.6s ease-in-out infinite; }
+.dot.verde { background:var(--verde); }
+@keyframes dot-p { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
 
-  /* ── Botón flotante de confirmación ─────────────────────────────────────── */
-  .barra-inferior {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(14,17,23,0.95);
-    backdrop-filter: blur(20px);
-    border-top: 1px solid var(--borde-suave);
-    padding: 14px clamp(16px, 4vw, 28px) calc(14px + env(safe-area-inset-bottom, 0px));
-    z-index: 40;
-  }
-  .btn-confirmar {
-    width: 100%;
-    background: var(--acento);
-    color: white; border: none;
-    border-radius: 14px;
-    padding: 18px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 17px; font-weight: 800;
-    letter-spacing: 0.2px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    box-shadow: 0 4px 20px rgba(59,130,246,0.4);
-    transition: background 0.2s, opacity 0.2s, transform 0.1s;
-  }
-  .btn-confirmar:active { transform: scale(0.98); }
-  .btn-confirmar:disabled {
-    background: var(--surface-2);
-    color: var(--texto-dim);
-    box-shadow: none;
-    cursor: not-allowed;
-  }
+.ticker-track { display:flex; align-items:center; justify-content:center; gap:10px; }
+.ticker-flecha { font-size:12px; color:var(--texto-d); opacity:0.5; flex-shrink:0; }
+.ticker-card { flex-shrink:0; text-align:center; transition:transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.5s ease; }
+.ticker-card.lateral { opacity:0.35; transform:scale(0.76); }
+.ticker-card.central { opacity:1; transform:scale(1); position:relative; }
+.ticker-card.central::before {
+  content:''; position:absolute; inset:-8px -14px;
+  background: var(--acento-d); border:1px solid rgba(59,130,246,0.3);
+  border-radius:12px; z-index:-1;
+  animation:glow-a 2s ease-in-out infinite;
+}
+.ticker-card.central.verde::before {
+  background: var(--verde-d); border-color:rgba(16,185,129,0.3);
+  animation:glow-v 2s ease-in-out infinite;
+}
+@keyframes glow-a { 0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,0.2)} 50%{box-shadow:0 0 0 5px rgba(59,130,246,0.06)} }
+@keyframes glow-v { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.2)} 50%{box-shadow:0 0 0 5px rgba(16,185,129,0.06)} }
+.ticker-numero { font-family:'DM Mono',monospace; font-weight:700; line-height:1; }
+.ticker-card.lateral .ticker-numero { font-size:18px; color:var(--texto-m); }
+.ticker-card.central .ticker-numero { font-size:28px; color:#fff; }
+.ticker-label { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--texto-d); margin-top:5px; }
+.ticker-card.central .ticker-label { color:var(--acento); }
+.ticker-card.central.verde .ticker-label { color:var(--verde); }
+.ticker-track.deslizar .ticker-card.lateral.izq { transform:scale(0.55) translateX(-28px); opacity:0; }
+.ticker-track.deslizar .ticker-card.central      { transform:scale(0.76) translateX(-36px); opacity:0.35; }
+.ticker-track.deslizar .ticker-card.lateral.der  { transform:scale(1) translateX(-36px); opacity:1; }
 
-  /* ── Overlay de confirmación (turno generado) ───────────────────────────── */
-  .overlay-exito {
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(2,8,18,0.92);
-    display: none;
-    align-items: center; justify-content: center;
-    backdrop-filter: blur(6px);
-  }
-  .overlay-exito.visible { display: flex; }
-  .exito-caja {
-    background: var(--surface);
-    border: 1px solid var(--borde);
-    border-radius: 24px;
-    padding: 40px 32px;
-    text-align: center;
-    width: min(360px, 88vw);
-    animation: exito-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-  @keyframes exito-in {
-    from { opacity: 0; transform: scale(0.85); }
-    to   { opacity: 1; transform: scale(1); }
-  }
-  .exito-check {
-    width: 64px; height: 64px;
-    background: var(--verde-dim);
-    border: 2px solid var(--verde);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px; color: var(--verde);
-    margin: 0 auto 18px;
-  }
-  .exito-eyebrow {
-    font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px;
-    color: var(--verde); margin-bottom: 10px;
-  }
-  .exito-turno {
-    font-family: 'DM Mono', monospace;
-    font-size: 38px; font-weight: 700;
-    color: var(--blanco);
-    margin-bottom: 6px;
-  }
-  .exito-detalle {
-    font-size: 13px; color: var(--texto-mid);
-    margin-bottom: 24px;
-    line-height: 1.6;
-  }
-  .exito-detalle strong { color: var(--texto); }
-  .btn-nuevo {
-    width: 100%;
-    background: var(--acento);
-    color: white; border: none;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 14px; font-weight: 700;
-    cursor: pointer;
-  }
+/* Resumen e indicadores en columna izquierda */
+.izq-resumen {
+  padding: 18px;
+  flex:1;
+  display:flex; flex-direction:column; gap:12px;
+}
+.res-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.res-label { font-size:11px; font-weight:600; color:var(--texto-d); text-transform:uppercase; letter-spacing:0.5px; }
+.res-valor { font-family:'DM Mono',monospace; font-size:20px; font-weight:700; color:var(--texto); }
+.res-valor.vacio { color:var(--texto-d); font-size:14px; }
 
-  /* ── Animación de entrada ────────────────────────────────────────────────── */
-  .paso { animation: entrada 0.35s ease both; }
-  .paso:nth-child(1) { animation-delay: 0.03s; }
-  .paso:nth-child(2) { animation-delay: 0.08s; }
-  .paso:nth-child(3) { animation-delay: 0.13s; }
-  .paso:nth-child(4) { animation-delay: 0.18s; }
-  @keyframes entrada {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  /* ── PANTALLA DE LOGIN (válida 24h, guardada en localStorage) ──────────── */
-  .login-overlay {
-    position: fixed; inset: 0; z-index: 300;
-    background: var(--bg);
-    background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(59,130,246,0.07) 0%, transparent 60%);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-    transition: opacity 0.4s ease;
-  }
-  .login-overlay.oculto { opacity: 0; pointer-events: none; }
-  .login-caja {
-    background: var(--surface);
-    border: 1px solid var(--borde-suave);
-    border-radius: 20px;
-    padding: 36px 28px;
-    width: min(380px, 100%);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-    animation: login-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-    text-align: center;
-  }
-  @keyframes login-in {
-    from { opacity: 0; transform: translateY(16px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .login-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 19px; font-weight: 600;
-    color: var(--blanco); margin-bottom: 4px;
-  }
-  .login-sub {
-    font-size: 11px; color: var(--texto-dim);
-    letter-spacing: 0.6px; text-transform: uppercase;
-    margin-bottom: 28px;
-  }
-  .login-input-wrap { position: relative; margin-bottom: 10px; }
-  .login-input {
-    width: 100%;
-    background: var(--surface-2);
-    border: 1.5px solid var(--borde-suave);
-    border-radius: 12px;
-    padding: 14px 46px 14px 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 22px; font-weight: 700;
-    color: var(--texto); outline: none;
-    letter-spacing: 6px; text-align: center;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .login-input:focus { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-dim); }
-  .login-input.error { border-color: var(--rojo); animation: sacudir 0.4s ease; }
-  @keyframes sacudir {
-    0%,100% { transform: translateX(0); }
-    20%      { transform: translateX(-8px); }
-    40%      { transform: translateX(8px); }
-    60%      { transform: translateX(-5px); }
-    80%      { transform: translateX(5px); }
-  }
-  .login-ojo {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; color: var(--texto-dim);
-    cursor: pointer; font-size: 16px; padding: 4px;
-  }
-  .login-error {
-    font-size: 12px; color: var(--rojo);
-    min-height: 18px; margin-bottom: 12px;
-    opacity: 0; transition: opacity 0.2s;
-  }
-  .login-error.visible { opacity: 1; }
-  .login-btn {
-    width: 100%;
-    background: var(--acento); color: white; border: none;
-    border-radius: 12px; padding: 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px; font-weight: 700;
-    cursor: pointer; box-shadow: 0 4px 16px rgba(59,130,246,0.35);
-    transition: background 0.2s, opacity 0.2s;
-  }
-  .login-btn:hover  { background: #2563eb; }
-  .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .login-intentos { font-size: 11px; color: var(--texto-dim); margin-top: 14px; }
-  .login-bloqueado {
-    background: var(--rojo-dim); border: 1px solid rgba(239,68,68,0.3);
-    border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #f87171;
-    margin-top: 12px; display: none; line-height: 1.6;
-  }
-  .login-bloqueado.visible { display: block; }
-  .login-conectando {
-    font-size: 12px; color: var(--texto-dim);
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 10px 0;
-  }
-  .login-spin { display: inline-block; animation: login-spin 1s linear infinite; }
-  @keyframes login-spin { to { transform: rotate(360deg); } }
-  .login-vigencia {
-    font-size: 10px; color: var(--texto-dim);
-    margin-top: 18px; line-height: 1.5;
-  }
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLUMNA DERECHA — formulario
+════════════════════════════════════════════════════════════════════════════ */
+.col-der {
+  overflow-y: auto;
+  padding: clamp(16px, 2.5vw, 24px);
+  display:flex; flex-direction:column; gap:20px;
+  padding-bottom: 100px; /* espacio para botón fijo */
+}
 
-  /* Ocultar contenido principal hasta autenticar */
-  body.sin-auth header,
-  body.sin-auth .ticker-wrap,
-  body.sin-auth main,
-  body.sin-auth .barra-inferior { display: none; }
+/* Títulos de sección */
+.sec-titulo {
+  font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:1.2px;
+  color:var(--texto-d);
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:14px;
+}
+.sec-titulo::after { content:''; flex:1; height:1px; background:var(--glass-border); }
+.sec-num {
+  width:20px; height:20px; border-radius:50%;
+  background:var(--acento-d); border:1px solid rgba(59,130,246,0.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800; color:var(--acento); flex-shrink:0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CATEGORÍAS + SUBMENÚS (swipe-fuse / accordion glass)
+════════════════════════════════════════════════════════════════════════════ */
+.categorias { display:flex; flex-direction:column; gap:10px; }
+
+/* Botón de categoría principal */
+.cat-btn {
+  width:100%;
+  background: var(--glass);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radio);
+  padding: 0;
+  cursor:pointer;
+  overflow:hidden;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cat-btn:hover { border-color: var(--glass-border-hover); }
+.cat-btn.abierta { border-color: var(--cat-color, var(--acento)); box-shadow: 0 0 0 1px var(--cat-color, var(--acento)) inset; }
+.cat-btn.selec   { border-color: var(--cat-color, var(--acento)); background: var(--cat-color-d, var(--acento-d)); box-shadow: 0 0 0 1px var(--cat-color, var(--acento)) inset; }
+
+.cat-header {
+  display:flex; align-items:center; gap:12px;
+  padding: 14px 16px;
+  transition: background 0.2s;
+}
+.cat-btn:active .cat-header { background: rgba(255,255,255,0.04); }
+
+.cat-icono {
+  width:40px; height:40px; flex-shrink:0;
+  border-radius:10px;
+  background: rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+  transition: background 0.25s;
+}
+.cat-btn.abierta .cat-icono,
+.cat-btn.selec   .cat-icono { background: var(--cat-color, var(--acento)); }
+
+.cat-info { flex:1; text-align:left; }
+.cat-nombre { font-size:14px; font-weight:700; color:var(--texto); }
+.cat-desc   { font-size:11px; color:var(--texto-d); margin-top:2px; }
+.cat-btn.selec .cat-nombre { color:#fff; }
+
+/* Flecha de acordeón — rota al abrir */
+.cat-arrow {
+  font-size:11px; color:var(--texto-d);
+  transition: transform 0.3s ease, color 0.2s;
+  flex-shrink:0;
+}
+.cat-btn.abierta .cat-arrow { transform:rotate(90deg); color:var(--cat-color, var(--acento)); }
+
+/* Badge de subcategoría seleccionada */
+.cat-badge {
+  display:none;
+  font-size:10px; font-weight:700;
+  background: var(--cat-color, var(--acento));
+  color:#fff; padding:2px 8px; border-radius:10px;
+  flex-shrink:0;
+  max-width: 140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cat-btn.selec .cat-badge { display:inline-block; }
+.cat-btn.selec .cat-arrow { display:none; }
+
+/* Submenú deslizable (tipo swipe-gravity: cae hacia abajo con resorte) */
+.sub-menu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-top: 0 solid transparent;
+}
+.sub-menu.abierto {
+  max-height: 400px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.sub-lista { padding: 8px; display:flex; flex-direction:column; gap:4px; }
+
+/* Botón de subcategoría (swipe-fuse: toque activa con destello) */
+.sub-item {
+  width:100%; background:none; border:none;
+  border-radius:9px;
+  padding: 11px 14px;
+  text-align:left; cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:500;
+  color:var(--texto-m);
+  display:flex; align-items:center; gap:10px;
+  transition: background 0.15s, color 0.15s;
+  position:relative; overflow:hidden;
+}
+.sub-item::before {
+  content:'';
+  position:absolute; inset:0;
+  background: var(--cat-color, var(--acento));
+  opacity:0;
+  transition: opacity 0.15s;
+}
+.sub-item:hover   { background:rgba(255,255,255,0.05); color:var(--texto); }
+.sub-item.selec   { background:rgba(255,255,255,0.08); color:#fff; font-weight:700; }
+.sub-item.selec::before { opacity:0.12; }
+.sub-item-dot {
+  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+  background: var(--glass-border-hover);
+  transition: background 0.15s;
+}
+.sub-item.selec .sub-item-dot { background: var(--cat-color, var(--acento)); }
+
+/* Ripple en subitem al tocar (swipe-fuse effect) */
+@keyframes ripple-sub {
+  from { transform:scale(0); opacity:0.3; }
+  to   { transform:scale(3); opacity:0; }
+}
+.ripple {
+  position:absolute; border-radius:50%; pointer-events:none;
+  width:60px; height:60px; margin:-30px;
+  background: var(--cat-color, var(--acento));
+  animation: ripple-sub 0.5s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOTA
+════════════════════════════════════════════════════════════════════════════ */
+.nota-wrap { position:relative; }
+.nota-input {
+  width:100%; background:var(--glass);
+  backdrop-filter:var(--blur-sm); -webkit-backdrop-filter:var(--blur-sm);
+  border:1px solid var(--glass-border); border-radius:var(--radio);
+  padding:13px 16px; font-family:'DM Sans',sans-serif;
+  font-size:13px; color:var(--texto); outline:none; resize:none; min-height:70px;
+  transition: border-color 0.2s;
+}
+.nota-input:focus { border-color:rgba(255,255,255,0.22); }
+.nota-input::placeholder { color:var(--texto-d); }
+.nota-contador { position:absolute; bottom:10px; right:14px;
+  font-size:9px; color:var(--texto-d); font-family:'DM Mono',monospace; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOTÓN GENERAR (fijo en la base de la columna derecha)
+════════════════════════════════════════════════════════════════════════════ */
+.barra-inferior {
+  position:fixed;
+  bottom:0;
+  /* en desktop, alineado con la columna derecha */
+  left: 320px;
+  right: 0;
+  background: rgba(11,15,26,0.85);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-top: 1px solid var(--glass-border);
+  padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index:50;
+}
+@media (max-width:720px) {
+  .barra-inferior { left:0; }
+}
+
+.btn-confirmar {
+  width:100%; border:none; border-radius:var(--radio);
+  padding: 16px;
+  font-family:'DM Sans',sans-serif; font-size:16px; font-weight:800;
+  cursor:pointer; letter-spacing:0.2px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color:#fff;
+  box-shadow: 0 4px 20px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+  transition: opacity 0.2s, transform 0.12s, box-shadow 0.2s;
+}
+.btn-confirmar:active { transform:scale(0.98); }
+.btn-confirmar:disabled {
+  background: var(--glass);
+  color: var(--texto-d);
+  box-shadow: none;
+  cursor:not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERLAY ÉXITO
+════════════════════════════════════════════════════════════════════════════ */
+.overlay-exito {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(5,8,16,0.88);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  display:none; align-items:center; justify-content:center;
+}
+.overlay-exito.visible { display:flex; }
+.exito-caja {
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align:center;
+  width:min(360px,88vw);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  animation: exito-in 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes exito-in { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
+.exito-check {
+  width:64px; height:64px;
+  background:var(--verde-d); border:1.5px solid var(--verde);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:var(--verde);
+  margin:0 auto 18px;
+}
+.exito-eyebrow { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--verde); margin-bottom:10px; }
+.exito-turno   { font-family:'DM Mono',monospace; font-size:44px; font-weight:800; color:#fff; margin-bottom:8px; line-height:1; }
+.exito-detalle { font-size:13px; color:var(--texto-m); margin-bottom:24px; line-height:1.6; }
+.exito-detalle strong { color:var(--texto); }
+.btn-nuevo {
+  width:100%; background:var(--acento); color:#fff; border:none;
+  border-radius:12px; padding:14px; font-size:14px; font-weight:700; cursor:pointer;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+}
 </style>
 </head>
 <body class="sin-auth">
 
-<!-- ── PANTALLA DE LOGIN (válida 24h en este dispositivo) ─────────────────── -->
+<!-- ── LOGIN ─────────────────────────────────────────────────────────────── -->
 <div class="login-overlay" id="login-overlay">
   <div class="login-caja">
     <div class="login-logo">AAC Coyoacán</div>
     <div class="login-sub">Recepción · Acceso restringido</div>
-
     <div class="login-conectando" id="login-conectando">
       <span class="login-spin">⟳</span> Verificando conexión...
     </div>
-
     <div id="login-form" style="display:none;">
       <div class="login-input-wrap">
         <input class="login-input" id="login-input" type="password"
                placeholder="••••••" maxlength="30"
-               autocomplete="off" autocorrect="off" spellcheck="false"
+               autocomplete="off" spellcheck="false"
                onkeydown="if(event.key==='Enter') verificarAccesoRecepcion()">
         <button class="login-ojo" id="login-ojo" onclick="toggleVerPassRecepcion()" tabindex="-1">👁</button>
       </div>
@@ -594,19 +513,29 @@
       <button class="login-btn" id="login-btn" onclick="verificarAccesoRecepcion()">Ingresar</button>
       <div class="login-intentos" id="login-intentos"></div>
       <div class="login-bloqueado" id="login-bloqueado">
-        🔒 Acceso bloqueado por intentos fallidos.<br>
-        Espera <span id="login-cuenta">60</span> segundos.
+        🔒 Acceso bloqueado.<br>Espera <span id="login-cuenta">60</span> segundos.
       </div>
-      <div class="login-vigencia">El acceso se guarda en este dispositivo<br>y solo se pedirá de nuevo al día siguiente.</div>
+      <div class="login-vigencia">Acceso guardado en este dispositivo.<br>Solo se pedirá de nuevo al día siguiente.</div>
     </div>
-
-    <div id="login-sin-conexion" style="display:none; font-size:12px; color:var(--rojo); line-height:1.7;">
+    <div id="login-sin-conexion" style="display:none;font-size:12px;color:var(--rojo);line-height:1.7;">
       ✖ Sin conexión con Firebase.<br>
-      <button onclick="location.reload()" style="background:var(--rojo-dim);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:12px;margin-top:10px;">Reintentar</button>
+      <button onclick="location.reload()" style="background:var(--rojo-d);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:12px;margin-top:10px;">Reintentar</button>
     </div>
   </div>
 </div>
 
+<!-- ── OVERLAY ÉXITO ──────────────────────────────────────────────────────── -->
+<div class="overlay-exito" id="overlay-exito">
+  <div class="exito-caja">
+    <div class="exito-check">✓</div>
+    <div class="exito-eyebrow">Turno asignado</div>
+    <div class="exito-turno" id="exito-turno">T-000</div>
+    <div class="exito-detalle" id="exito-detalle"></div>
+    <button class="btn-nuevo" onclick="reiniciarFormulario()">+ Asignar otro turno</button>
+  </div>
+</div>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
 <header>
   <div>
     <div class="logo">AAC Coyoacán</div>
@@ -615,492 +544,528 @@
   <div class="chip conectando" id="badge-conexion">⟳ Conectando</div>
 </header>
 
-<!-- Ticker 1: Generación de turnos (consecutivo de Recepción) -->
-<div class="ticker-wrap">
-  <div class="ticker-eyebrow"><span class="dot"></span> Generación de turnos · Recepción</div>
-  <div class="ticker-track" id="ticker-track">
-    <div class="ticker-card lateral izq" id="ticker-anterior">
-      <div class="ticker-numero">—</div>
-      <div class="ticker-label">Generado</div>
+<!-- ── LAYOUT ─────────────────────────────────────────────────────────────── -->
+<div class="layout-body">
+
+  <!-- COLUMNA IZQUIERDA: tickers + resumen -->
+  <aside class="col-izq">
+
+    <!-- Ticker 1: consecutivo de llamadas -->
+    <div class="ticker-wrap">
+      <div class="ticker-eyebrow"><span class="dot"></span> Turnos llamados · Módulos</div>
+      <div class="ticker-track" id="ticker-track">
+        <div class="ticker-card lateral izq" id="ticker-anterior">
+          <div class="ticker-numero">—</div>
+          <div class="ticker-label">Anterior</div>
+        </div>
+        <span class="ticker-flecha">→</span>
+        <div class="ticker-card central" id="ticker-actual">
+          <div class="ticker-numero">—</div>
+          <div class="ticker-label">Último llamado</div>
+        </div>
+        <span class="ticker-flecha">→</span>
+        <div class="ticker-card lateral der" id="ticker-siguiente">
+          <div class="ticker-numero">—</div>
+          <div class="ticker-label">Próximo</div>
+        </div>
+      </div>
     </div>
-    <span class="ticker-flecha">→</span>
-    <div class="ticker-card central" id="ticker-actual">
-      <div class="ticker-numero">—</div>
-      <div class="ticker-label">Último generado</div>
+
+    <!-- Ticker 2: asignación de Recepción -->
+    <div class="ticker-wrap">
+      <div class="ticker-eyebrow"><span class="dot verde"></span> Asignación · Recepción</div>
+      <div class="ticker-track" id="ticker-track-modulo">
+        <div class="ticker-card lateral izq" id="ticker-modulo-anterior">
+          <div class="ticker-numero">—</div>
+          <div class="ticker-label">Último asignado</div>
+        </div>
+        <span class="ticker-flecha">→</span>
+        <div class="ticker-card central verde" id="ticker-modulo-actual">
+          <div class="ticker-numero">—</div>
+          <div class="ticker-label">Próximo a asignar</div>
+        </div>
+        <span class="ticker-flecha">→</span>
+        <div class="ticker-card lateral der" id="ticker-modulo-pendientes">
+          <div class="ticker-numero">—</div>
+          <div class="ticker-label">Sin llamar</div>
+        </div>
+      </div>
     </div>
-    <span class="ticker-flecha">→</span>
-    <div class="ticker-card lateral der" id="ticker-siguiente">
-      <div class="ticker-numero">—</div>
-      <div class="ticker-label">Próximo a generar</div>
+
+    <!-- Indicadores -->
+    <div class="izq-resumen">
+      <div class="res-card">
+        <span class="res-label">Turno asignado</span>
+        <span class="res-valor vacio" id="resumen-tramite-short">—</span>
+      </div>
+      <div class="res-card">
+        <span class="res-label">Turnos en espera</span>
+        <span class="res-valor" id="resumen-turno">—</span>
+      </div>
     </div>
+
+  </aside>
+
+  <!-- COLUMNA DERECHA: formulario -->
+  <div class="col-der">
+
+    <!-- Paso 1: tipo de trámite -->
+    <div>
+      <div class="sec-titulo"><span class="sec-num">1</span> Tipo de trámite</div>
+      <div class="categorias" id="categorias"></div>
+    </div>
+
+    <!-- Paso 2: nota -->
+    <div>
+      <div class="sec-titulo"><span class="sec-num">2</span> Nota adicional (opcional)</div>
+      <div class="nota-wrap">
+        <textarea class="nota-input" id="nota-input" maxlength="120"
+          placeholder="Ej. Trae documentos incompletos, requiere copia…"></textarea>
+        <span class="nota-contador" id="nota-contador">0/120</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- Ticker 2: Próximo turno a asignar en Recepción (cualquier dispositivo) -->
-<div class="ticker-wrap ticker-wrap-modulo">
-  <div class="ticker-eyebrow"><span class="dot dot-verde"></span> Asignación en Recepción · Todos los dispositivos</div>
-  <div class="ticker-track" id="ticker-track-modulo">
-    <div class="ticker-card lateral izq" id="ticker-modulo-anterior">
-      <div class="ticker-numero">—</div>
-      <div class="ticker-label">Último asignado</div>
-    </div>
-    <span class="ticker-flecha">→</span>
-    <div class="ticker-card central central-verde" id="ticker-modulo-actual">
-      <div class="ticker-numero">—</div>
-      <div class="ticker-label">Próximo a asignar</div>
-    </div>
-    <span class="ticker-flecha">→</span>
-    <div class="ticker-card lateral der" id="ticker-modulo-pendientes">
-      <div class="ticker-numero">—</div>
-      <div class="ticker-label">Sin llamar aún</div>
-    </div>
-  </div>
-</div>
-
-<main>
-
-  <!-- Paso 1: trámite -->
-  <div class="paso">
-    <div class="paso-header">
-      <span class="paso-num">1</span>
-      <span class="paso-titulo">Tipo de trámite</span>
-    </div>
-    <div class="tramites-grid" id="tramites-grid"></div>
-  </div>
-
-  <!-- Paso 2: nota opcional -->
-  <div class="paso">
-    <div class="paso-header">
-      <span class="paso-num">2</span>
-      <span class="paso-titulo">Nota adicional (opcional)</span>
-    </div>
-    <div class="nota-wrap">
-      <textarea class="nota-input" id="nota-input" maxlength="120"
-        placeholder="Ej. Trae documentos incompletos, requiere copia, etc."></textarea>
-      <span class="nota-contador" id="nota-contador">0/120</span>
-    </div>
-  </div>
-
-  <!-- Resumen -->
-  <div class="paso">
-    <div class="paso-header">
-      <span class="paso-num">✓</span>
-      <span class="paso-titulo">Resumen</span>
-    </div>
-    <div class="resumen-card">
-      <div class="resumen-fila">
-        <span class="resumen-label">Trámite</span>
-        <span class="resumen-valor vacio" id="resumen-tramite">Sin seleccionar</span>
-      </div>
-      <div class="resumen-fila">
-        <span class="resumen-label">Turnos en espera</span>
-        <span class="resumen-valor" id="resumen-turno">—</span>
-      </div>
-    </div>
-  </div>
-
-</main>
-
+<!-- Botón fijo -->
 <div class="barra-inferior">
   <button class="btn-confirmar" id="btn-confirmar" disabled onclick="confirmarTurno()">
     🎫 Generar turno
   </button>
 </div>
 
-<!-- Overlay de éxito -->
-<div class="overlay-exito" id="overlay-exito">
-  <div class="exito-caja">
-    <div class="exito-check">✓</div>
-    <div class="exito-eyebrow">Turno en fila de espera</div>
-    <div class="exito-turno" id="exito-turno">~T-000</div>
-    <div class="exito-detalle" id="exito-detalle">
-      Asignado al <strong>Módulo 1</strong><br>
-      Trámite: <strong>Aclaración</strong>
-    </div>
-    <button class="btn-nuevo" onclick="reiniciarFormulario()">+ Asignar otro turno</button>
-  </div>
-</div>
-
 <script type="module">
-  import { initializeApp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, push, query, orderByChild, runTransaction, get }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, push, query, orderByChild, runTransaction, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  const firebaseConfig = {
-    projectId:   "turnero-aac-coyoacan",
-    databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
-  const MODS = 6;
+const firebaseConfig = {
+  projectId:   "turnero-aac-coyoacan",
+  databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
 
-  const estadoRef   = ref(db, 'estado');
-  const colaRef     = ref(db, 'cola');
-  const contadorRef = ref(db, 'config/ultimoNumeroRecepcion');  // contador atómico compartido
-  const accesoRef   = ref(db, 'config/acceso');                 // misma contraseña que operador.html
+const estadoRef   = ref(db, 'estado');
+const colaRef     = ref(db, 'cola');
+const contadorRef = ref(db, 'config/ultimoNumeroRecepcion');
+const accesoRef   = ref(db, 'config/acceso');
 
-  // ── AUTENTICACIÓN — válida 24h, guardada en localStorage de este dispositivo ─
-  const LOGIN_KEY     = 'recepcion_acceso_fecha';   // guarda la fecha (YYYY-MM-DD) del último login exitoso
-  const MAX_INTENTOS  = 5;
-  const BLOQUEO_SEG   = 60;
-  let intentosFallidos = 0;
-  let bloqueadoHasta   = 0;
-  let cuentaRegresivaTimer = null;
+/* ── AUTENTICACIÓN (24h, localStorage) ──────────────────────────────────── */
+const LOGIN_KEY    = 'recepcion_acceso_fecha';
+const MAX_INTENTOS = 5;
+const BLOQUEO_SEG  = 60;
+let intentosFallidos = 0;
+let bloqueadoHasta   = 0;
+let cuentaRegresivaTimer = null;
 
-  function hoyStr() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
+function hoyStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function sesionVigente() { return localStorage.getItem(LOGIN_KEY) === hoyStr(); }
+function ocultarLogin() {
+  document.body.classList.remove('sin-auth');
+  const ov = document.getElementById('login-overlay');
+  ov.classList.add('oculto');
+  setTimeout(() => { ov.style.display = 'none'; }, 400);
+}
 
-  function sesionVigente() {
-    return localStorage.getItem(LOGIN_KEY) === hoyStr();
-  }
-
-  function ocultarLogin() {
-    document.body.classList.remove('sin-auth');
-    const ov = document.getElementById('login-overlay');
-    ov.classList.add('oculto');
-    setTimeout(() => { ov.style.display = 'none'; }, 400);
-  }
-
-  if (sesionVigente()) {
-    ocultarLogin();
-  } else {
-    // Verificar conexión antes de mostrar el formulario
-    let timeoutConn = setTimeout(() => {
+if (sesionVigente()) {
+  ocultarLogin();
+} else {
+  let tcn = setTimeout(() => {
+    document.getElementById('login-conectando').style.display = 'none';
+    document.getElementById('login-sin-conexion').style.display = 'block';
+  }, 8000);
+  onValue(ref(db, '.info/connected'), snap => {
+    if (snap.val()) {
+      clearTimeout(tcn);
       document.getElementById('login-conectando').style.display = 'none';
-      document.getElementById('login-sin-conexion').style.display = 'block';
-    }, 8000);
-    onValue(ref(db, '.info/connected'), snap => {
-      if (snap.val()) {
-        clearTimeout(timeoutConn);
-        document.getElementById('login-conectando').style.display = 'none';
-        document.getElementById('login-form').style.display = 'block';
-        setTimeout(() => document.getElementById('login-input').focus(), 100);
+      document.getElementById('login-form').style.display = 'block';
+      setTimeout(() => document.getElementById('login-input').focus(), 100);
+    }
+  });
+}
+
+window.toggleVerPassRecepcion = function() {
+  const inp = document.getElementById('login-input');
+  const ojo = document.getElementById('login-ojo');
+  if (inp.type === 'password') { inp.type = 'text'; ojo.textContent = '🙈'; }
+  else                          { inp.type = 'password'; ojo.textContent = '👁'; }
+};
+
+window.verificarAccesoRecepcion = async function() {
+  if (Date.now() < bloqueadoHasta) return;
+  const inputEl = document.getElementById('login-input');
+  const btnEl   = document.getElementById('login-btn');
+  const ing     = inputEl.value.trim();
+  if (!ing) { mostrarErrorLogin('Ingresa la contraseña.'); return; }
+  btnEl.disabled = true; btnEl.textContent = '⟳ Verificando...';
+  try {
+    const snap = await get(accesoRef);
+    const cfg  = snap.val();
+    if (!cfg?.password) {
+      mostrarErrorLogin('Contraseña no configurada en Firebase.');
+      btnEl.disabled = false; btnEl.textContent = 'Ingresar'; return;
+    }
+    if (ing === cfg.password) {
+      intentosFallidos = 0;
+      localStorage.setItem(LOGIN_KEY, hoyStr());
+      ocultarLogin();
+    } else {
+      intentosFallidos++;
+      inputEl.value = '';
+      inputEl.classList.add('error');
+      setTimeout(() => inputEl.classList.remove('error'), 600);
+      const r = MAX_INTENTOS - intentosFallidos;
+      if (intentosFallidos >= MAX_INTENTOS) { bloquearAcceso(); }
+      else {
+        mostrarErrorLogin('Contraseña incorrecta. ' + r + ' intento' + (r!==1?'s':'') + ' restante' + (r!==1?'s':'') + '.');
+        document.getElementById('login-intentos').textContent = 'Intentos: ' + intentosFallidos + '/' + MAX_INTENTOS;
       }
-    });
-  }
-
-  window.toggleVerPassRecepcion = function() {
-    const inp = document.getElementById('login-input');
-    const ojo = document.getElementById('login-ojo');
-    if (inp.type === 'password') { inp.type = 'text';     ojo.textContent = '🙈'; }
-    else                          { inp.type = 'password'; ojo.textContent = '👁'; }
-  };
-
-  window.verificarAccesoRecepcion = async function() {
-    if (Date.now() < bloqueadoHasta) return;
-    const inputEl   = document.getElementById('login-input');
-    const btnEl     = document.getElementById('login-btn');
-    const ingresada = inputEl.value.trim();
-    if (!ingresada) { mostrarErrorLoginRecepcion('Ingresa la contraseña.'); return; }
-
-    btnEl.disabled = true;
-    btnEl.textContent = '⟳ Verificando...';
-
-    try {
-      const snap   = await get(accesoRef);
-      const config = snap.val();
-      if (!config || !config.password) {
-        mostrarErrorLoginRecepcion('Contraseña no configurada en Firebase.');
-        btnEl.disabled = false; btnEl.textContent = 'Ingresar';
-        return;
-      }
-
-      if (ingresada === config.password) {
-        intentosFallidos = 0;
-        localStorage.setItem(LOGIN_KEY, hoyStr());
-        ocultarLogin();
-      } else {
-        intentosFallidos++;
-        inputEl.value = '';
-        inputEl.classList.add('error');
-        setTimeout(() => inputEl.classList.remove('error'), 600);
-        const restantes = MAX_INTENTOS - intentosFallidos;
-        if (intentosFallidos >= MAX_INTENTOS) {
-          bloquearAccesoRecepcion();
-        } else {
-          mostrarErrorLoginRecepcion('Contraseña incorrecta. ' + restantes + ' intento' + (restantes!==1?'s':'') + ' restante' + (restantes!==1?'s':'') + '.');
-          document.getElementById('login-intentos').textContent = 'Intentos fallidos: ' + intentosFallidos + ' / ' + MAX_INTENTOS;
-        }
-        btnEl.disabled = false; btnEl.textContent = 'Ingresar';
-      }
-    } catch(err) {
-      mostrarErrorLoginRecepcion('Error de conexión. Intenta de nuevo.');
       btnEl.disabled = false; btnEl.textContent = 'Ingresar';
     }
-  };
+  } catch { mostrarErrorLogin('Error de conexión.'); btnEl.disabled = false; btnEl.textContent = 'Ingresar'; }
+};
 
-  function bloquearAccesoRecepcion() {
-    bloqueadoHasta = Date.now() + BLOQUEO_SEG * 1000;
-    const bloqueoEl = document.getElementById('login-bloqueado');
-    const cuentaEl  = document.getElementById('login-cuenta');
-    const btnEl     = document.getElementById('login-btn');
-    document.getElementById('login-error').classList.remove('visible');
-    bloqueoEl.classList.add('visible');
-    btnEl.disabled = true;
-    let seg = BLOQUEO_SEG;
-    cuentaEl.textContent = seg;
-    if (cuentaRegresivaTimer) clearInterval(cuentaRegresivaTimer);
-    cuentaRegresivaTimer = setInterval(() => {
-      seg--;
-      cuentaEl.textContent = seg;
-      if (seg <= 0) {
-        clearInterval(cuentaRegresivaTimer);
-        bloqueoEl.classList.remove('visible');
-        btnEl.disabled = false; btnEl.textContent = 'Ingresar';
-        intentosFallidos = 0;
-        document.getElementById('login-intentos').textContent = '';
-        document.getElementById('login-input').focus();
-      }
-    }, 1000);
-  }
-
-  function mostrarErrorLoginRecepcion(msg) {
-    const el = document.getElementById('login-error');
-    el.textContent = '⚠ ' + msg;
-    el.classList.add('visible');
-    setTimeout(() => el.classList.remove('visible'), 4000);
-  }
-
-  // ── Catálogo de trámites ─────────────────────────────────────────────────
-  const TRAMITES = [
-    { id: 'aclaracion', nombre: 'Aclaración',          desc: 'Aclaración de pago o consumo', icono: '📝', color: '#3b82f6', colorDim: 'rgba(59,130,246,0.12)' },
-    { id: 'tramite',    nombre: 'Trámite',              desc: 'Alta, baja o cambio de servicio', icono: '📋', color: '#10b981', colorDim: 'rgba(16,185,129,0.12)' },
-    { id: 'adeudos',    nombre: 'Consulta de adeudos',  desc: 'Revisión de saldo o estado de cuenta', icono: '💰', color: '#f59e0b', colorDim: 'rgba(245,158,11,0.12)' },
-    { id: 'otro',       nombre: 'Otro',                 desc: 'Asunto no listado',                icono: '❓', color: '#a855f7', colorDim: 'rgba(168,85,247,0.12)' },
-  ];
-
-  let tramiteSel = null;
-  let colaPendienteCount = 0;
-
-  // ── Conexión ───────────────────────────────────────────────────────────────
-  onValue(ref(db, '.info/connected'), snap => {
-    const b = document.getElementById('badge-conexion');
-    if (snap.val()) { b.textContent = '✔ Conectado';    b.className = 'chip conectado'; }
-    else            { b.textContent = '✖ Sin conexión';  b.className = 'chip desconectado'; }
-  });
-
-  // ── Escuchar cola completa para mostrar pendientes Y último generado ───────
-  // colaTodos incluye atendidos y pendientes, ordenados por llegada (ts).
-  // El ÚLTIMO elemento de colaTodos es el turno más reciente que CUALQUIER
-  // dispositivo de Recepción puso en la fila — independientemente de si ya
-  // fue llamado o no por algún operador.
-  let colaOrdenada  = [];   // solo pendientes (sin atender) — para el contador y ticker 1
-  let colaTodos     = [];   // todos los registros — para saber el último generado
-  onValue(query(colaRef, orderByChild('ts')), snap => {
-    let pendientes = 0;
-    colaOrdenada = [];
-    colaTodos    = [];
-    snap.forEach(child => {
-      const v = child.val();
-      colaTodos.push(v);
-      if (!v.atendido) { pendientes++; colaOrdenada.push(v); }
-    });
-    colaPendienteCount = pendientes;
-    document.getElementById('resumen-turno').textContent = pendientes;
-    actualizarTicker();
-    actualizarTickerModulo();
-  });
-
-  // ── TICKER: turno atendido / en asignación / próximo ───────────────────────
-  function pad3(n) { return String(n).padStart(3, '0'); }
-
-  let ultimoTurnoActualTicker = null;
-  let estadoTickerActual      = { anterior: null, actual: null, siguiente: null };
-
-  // El consecutivo real vive en turnoGlobal — avanza siempre hacia adelante
-  // sin importar cuántos módulos atendieron ni en qué orden, por eso el
-  // "próximo turno" SIEMPRE es turnoGlobal + 1, nunca una posición relativa.
-  function actualizarTicker() {
-    const estado       = estadoTickerActual.estadoRaw;
-    const turnoGlobal  = estado?.turnoGlobal || 0;   // último número YA asignado
-    const hayPendiente = colaOrdenada.length > 0;     // ¿hay algo esperando ser llamado?
-
-    const anterior  = turnoGlobal > 1 ? turnoGlobal - 1 : 0;  // el llamado antes del actual
-    const actual    = turnoGlobal;                             // el último llamado/asignado
-    const siguiente = turnoGlobal + 1;                         // el próximo consecutivo a generar/llamar
-
-    const elAnterior  = document.getElementById('ticker-anterior').querySelector('.ticker-numero');
-    const elActual    = document.getElementById('ticker-actual').querySelector('.ticker-numero');
-    const elSiguiente = document.getElementById('ticker-siguiente').querySelector('.ticker-numero');
-
-    elAnterior.textContent  = anterior > 0 ? 'T-' + pad3(anterior) : '—';
-    elActual.textContent    = actual   > 0 ? 'T-' + pad3(actual)   : '—';
-    // Siempre el consecutivo real, exista o no algo en la cola todavía
-    elSiguiente.textContent = 'T-' + pad3(siguiente);
-
-    // Animar relevo si el turno actual cambió
-    if (ultimoTurnoActualTicker !== null && actual !== ultimoTurnoActualTicker && actual > 0) {
-      const track = document.getElementById('ticker-track');
-      track.classList.add('deslizar');
-      setTimeout(() => track.classList.remove('deslizar'), 550);
+function bloquearAcceso() {
+  bloqueadoHasta = Date.now() + BLOQUEO_SEG * 1000;
+  const bl = document.getElementById('login-bloqueado');
+  const cu = document.getElementById('login-cuenta');
+  const bn = document.getElementById('login-btn');
+  document.getElementById('login-error').classList.remove('visible');
+  bl.classList.add('visible'); bn.disabled = true;
+  let s = BLOQUEO_SEG; cu.textContent = s;
+  if (cuentaRegresivaTimer) clearInterval(cuentaRegresivaTimer);
+  cuentaRegresivaTimer = setInterval(() => {
+    s--; cu.textContent = s;
+    if (s <= 0) {
+      clearInterval(cuentaRegresivaTimer);
+      bl.classList.remove('visible');
+      bn.disabled = false; bn.textContent = 'Ingresar';
+      intentosFallidos = 0;
+      document.getElementById('login-intentos').textContent = '';
+      document.getElementById('login-input').focus();
     }
-    ultimoTurnoActualTicker = actual;
-  }
+  }, 1000);
+}
+function mostrarErrorLogin(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = '⚠ ' + msg; el.classList.add('visible');
+  setTimeout(() => el.classList.remove('visible'), 4000);
+}
 
-  // ── CONTADOR ATÓMICO COMPARTIDO (config/ultimoNumeroRecepcion) ─────────────
-  // PROBLEMA QUE RESUELVE: si solo calculamos max(colaTodos.length, turnoGlobal)
-  // en el momento de mostrar, el número "se pega" — cada turno nuevo generado
-  // vuelve a caer en el mismo máximo hasta que colaTodos.length lo supere por
-  // sí solo. La solución es un contador real que avanza con cada turno Y que
-  // también "salta" hacia adelante si detecta que turnoGlobal ya lo superó,
-  // guardando ese avance en Firebase para que TODOS los dispositivos lo vean
-  // igual de inmediato (no solo el que generó el salto).
-  let contadorActual = 0;   // espejo local del contador en Firebase, solo lectura
-  onValue(contadorRef, snap => {
-    contadorActual = snap.val() || 0;
-    actualizarTickerModulo();
-  });
+/* ── CATÁLOGO DE TRÁMITES CON SUBMENÚS ──────────────────────────────────── */
+const CATALOGO = [
+  {
+    id:'aclaracion', nombre:'Aclaración', icono:'📝',
+    color:'#3b82f6', colorD:'rgba(59,130,246,0.14)',
+    subs: ['Ingreso de promoción','Seguimiento de promoción','Notificación','Informes','Cobros altos']
+  },
+  {
+    id:'tramite', nombre:'Trámite', icono:'📋',
+    color:'#10b981', colorD:'rgba(16,185,129,0.14)',
+    subs: ['Cambio de nombre','Reducción','Verificación de medidor','Fugas','Otro']
+  },
+  {
+    id:'adeudos', nombre:'Consulta de adeudos', icono:'💰',
+    color:'#f59e0b', colorD:'rgba(245,158,11,0.14)',
+    subs: ['Adeudos anteriores a 5 años','Bimestres con requerimiento/fiscalizados','Restricción/suspensión']
+  },
+  {
+    id:'otro', nombre:'Otro', icono:'❓',
+    color:'#a855f7', colorD:'rgba(168,85,247,0.14)',
+    subs: []   // sin submenú
+  },
+];
 
-  let ultimoProximoTicker = null;
+let tramiteSel    = null;  // { catId, catNombre, subNombre } o null
+let colaPendienteCount  = 0;
+let catAbierta    = null;  // id de la categoría con submenú desplegado
 
-  // Solo LECTURA — usado por el ticker para mostrar, nunca reserva nada.
-  // Si turnoGlobal ya superó al contador local, mostramos ese valor más alto
-  // de inmediato (aunque el contador real en Firebase se sincronice un
-  // instante después mediante la transacción de abajo).
-  function siguienteRealRecepcionSoloLectura() {
-    const turnoGlobal = estadoTickerActual.estadoRaw?.turnoGlobal || 0;
-    return Math.max(contadorActual, turnoGlobal) + 1;
-  }
+/* ── Construcción dinámica de categorías ─────────────────────────────────── */
+const contCat = document.getElementById('categorias');
+CATALOGO.forEach(cat => {
+  const wrap = document.createElement('div');
+  wrap.id = 'wrap-' + cat.id;
 
-  // Avanza el contador de forma ATÓMICA y devuelve el número recién asignado.
-  // Si turnoGlobal venía adelantado, el contador "salta" a ese nivel primero
-  // y luego avanza uno más — quedando ya sincronizado para el siguiente turno.
-  async function reservarSiguienteNumero() {
-    const turnoGlobal = estadoTickerActual.estadoRaw?.turnoGlobal || 0;
-    const resultado = await runTransaction(contadorRef, actual => {
-      const base = Math.max(actual || 0, turnoGlobal);
-      return base + 1;
-    });
-    return resultado.snapshot.val();
-  }
+  const btn = document.createElement('button');
+  btn.className = 'cat-btn';
+  btn.id = 'cat-btn-' + cat.id;
+  btn.style.setProperty('--cat-color',   cat.color);
+  btn.style.setProperty('--cat-color-d', cat.colorD);
 
-  function actualizarTickerModulo() {
-    const elAnt  = document.getElementById('ticker-modulo-anterior').querySelector('.ticker-numero');
-    const elAct  = document.getElementById('ticker-modulo-actual').querySelector('.ticker-numero');
-    const elRest = document.getElementById('ticker-modulo-pendientes').querySelector('.ticker-numero');
+  // Si no tiene submenú, el badge no aplica igual
+  const tieneSubs = cat.subs.length > 0;
 
-    const proximo = siguienteRealRecepcionSoloLectura();
-
-    const textoUltimoAsignado = proximo > 1 ? 'T-' + pad3(proximo - 1) : '—';
-    const textoProximo        = 'T-' + pad3(proximo);
-
-    elAnt.textContent  = textoUltimoAsignado;
-    elAct.textContent  = textoProximo;
-    elRest.textContent = colaPendienteCount;
-
-    if (ultimoProximoTicker !== null && proximo !== ultimoProximoTicker) {
-      const track = document.getElementById('ticker-track-modulo');
-      track.classList.add('deslizar');
-      setTimeout(() => track.classList.remove('deslizar'), 550);
-    }
-    ultimoProximoTicker = proximo;
-  }
-
-  onValue(estadoRef, snap => {
-    estadoTickerActual.estadoRaw = snap.val();
-    actualizarTicker();
-    actualizarTickerModulo();
-  });
-
-  // ── Renderizar selector de trámites ──────────────────────────────────────
-  const tramGrid = document.getElementById('tramites-grid');
-  TRAMITES.forEach(t => {
-    const div = document.createElement('div');
-    div.className = 'tramite-card';
-    div.id = 'tram-card-' + t.id;
-    div.style.setProperty('--tramite-color', t.color);
-    div.style.setProperty('--tramite-color-dim', t.colorDim);
-    div.innerHTML = `
-      <div class="tramite-icono">${t.icono}</div>
-      <div class="tramite-texto">
-        <div class="tramite-nombre">${t.nombre}</div>
-        <div class="tramite-desc">${t.desc}</div>
+  btn.innerHTML = `
+    <div class="cat-header">
+      <div class="cat-icono">${cat.icono}</div>
+      <div class="cat-info">
+        <div class="cat-nombre">${cat.nombre}</div>
+        <div class="cat-desc">${tieneSubs ? cat.subs.length + ' opciones disponibles' : 'Sin subcategoría'}</div>
       </div>
-      <div class="tramite-check">✓</div>
-    `;
-    div.onclick = () => seleccionarTramite(t.id, t.nombre);
-    tramGrid.appendChild(div);
+      ${tieneSubs
+        ? `<span class="cat-badge" id="badge-${cat.id}">—</span>
+           <span class="cat-arrow">›</span>`
+        : `<span class="cat-badge" id="badge-${cat.id}">Seleccionado</span>
+           <span class="cat-arrow">›</span>`
+      }
+    </div>`;
+
+  if (tieneSubs) {
+    // Submenú
+    const sub = document.createElement('div');
+    sub.className = 'sub-menu';
+    sub.id = 'sub-' + cat.id;
+    const lista = document.createElement('div');
+    lista.className = 'sub-lista';
+    cat.subs.forEach(nombre => {
+      const item = document.createElement('button');
+      item.className = 'sub-item';
+      item.style.setProperty('--cat-color', cat.color);
+      item.innerHTML = `<span class="sub-item-dot"></span>${nombre}`;
+      item.onclick = (e) => {
+        // Efecto ripple
+        const r = document.createElement('span');
+        r.className = 'ripple';
+        r.style.setProperty('--cat-color', cat.color);
+        const rect = item.getBoundingClientRect();
+        r.style.left = (e.clientX - rect.left) + 'px';
+        r.style.top  = (e.clientY - rect.top)  + 'px';
+        item.appendChild(r);
+        setTimeout(() => r.remove(), 600);
+        seleccionarSub(cat.id, cat.nombre, nombre, btn, lista, cat);
+      };
+      lista.appendChild(item);
+    });
+    sub.appendChild(lista);
+    btn.appendChild(sub);
+
+    btn.querySelector('.cat-header').onclick = () => toggleCategoria(cat.id, btn, sub);
+  } else {
+    // Sin submenú: seleccionar directo
+    btn.onclick = () => seleccionarDirecto(cat.id, cat.nombre, btn);
+  }
+
+  wrap.appendChild(btn);
+  contCat.appendChild(wrap);
+});
+
+function toggleCategoria(id, btn, sub) {
+  const estaAbierta = sub.classList.contains('abierto');
+  // Cerrar la que estaba abierta (si es distinta)
+  if (catAbierta && catAbierta !== id) {
+    const btnPrev = document.getElementById('cat-btn-' + catAbierta);
+    const subPrev = document.getElementById('sub-'    + catAbierta);
+    if (btnPrev) btnPrev.classList.remove('abierta');
+    if (subPrev) subPrev.classList.remove('abierto');
+  }
+  if (estaAbierta) {
+    btn.classList.remove('abierta');
+    sub.classList.remove('abierto');
+    catAbierta = null;
+  } else {
+    btn.classList.add('abierta');
+    sub.classList.add('abierto');
+    catAbierta = id;
+  }
+}
+
+function seleccionarSub(catId, catNombre, subNombre, btn, lista, cat) {
+  tramiteSel = { catId, catNombre, subNombre, icono: cat.icono };
+  // Quitar selección anterior
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selec'));
+  document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('selec'));
+  // Marcar esta categoría y subitem
+  btn.classList.add('selec');
+  btn.classList.remove('abierta');
+  // Buscar el subitem correcto y marcarlo
+  lista.querySelectorAll('.sub-item').forEach(i => {
+    if (i.textContent.trim() === subNombre) i.classList.add('selec');
   });
+  // Badge y cerrar submenú
+  const badge = document.getElementById('badge-' + catId);
+  if (badge) badge.textContent = subNombre;
+  const sub = document.getElementById('sub-' + catId);
+  if (sub) sub.classList.remove('abierto');
+  catAbierta = null;
 
-  function seleccionarTramite(id, nombre) {
-    tramiteSel = id;
-    document.querySelectorAll('.tramite-card').forEach(el => el.classList.remove('selec'));
-    document.getElementById('tram-card-' + id).classList.add('selec');
-    document.getElementById('resumen-tramite').textContent = nombre;
-    document.getElementById('resumen-tramite').classList.remove('vacio');
-    actualizarBoton();
-  }
+  actualizarResumen();
+  actualizarBoton();
+}
 
-  function actualizarBoton() {
-    document.getElementById('btn-confirmar').disabled = !tramiteSel;
-  }
+function seleccionarDirecto(catId, catNombre, btn) {
+  const cat = CATALOGO.find(c => c.id === catId);
+  tramiteSel = { catId, catNombre, subNombre: null, icono: cat.icono };
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selec','abierta'));
+  document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('selec'));
+  btn.classList.add('selec');
+  actualizarResumen();
+  actualizarBoton();
+}
 
-  // ── Contador de nota ──────────────────────────────────────────────────────
-  document.getElementById('nota-input').addEventListener('input', function() {
-    document.getElementById('nota-contador').textContent = this.value.length + '/120';
+function actualizarResumen() {
+  const el = document.getElementById('resumen-tramite-short');
+  if (!tramiteSel) { el.textContent = '—'; el.classList.add('vacio'); return; }
+  el.classList.remove('vacio');
+  el.textContent = tramiteSel.subNombre
+    ? tramiteSel.catNombre + ' · ' + tramiteSel.subNombre
+    : tramiteSel.catNombre;
+}
+
+function actualizarBoton() {
+  document.getElementById('btn-confirmar').disabled = !tramiteSel;
+}
+
+/* ── Nota ────────────────────────────────────────────────────────────────── */
+document.getElementById('nota-input').addEventListener('input', function() {
+  document.getElementById('nota-contador').textContent = this.value.length + '/120';
+});
+
+/* ── Firebase — conexión ─────────────────────────────────────────────────── */
+onValue(ref(db, '.info/connected'), snap => {
+  const b = document.getElementById('badge-conexion');
+  if (snap.val()) { b.textContent = '✔ Conectado';   b.className = 'chip conectado'; }
+  else            { b.textContent = '✖ Sin conexión'; b.className = 'chip desconectado'; }
+});
+
+/* ── Firebase — cola ─────────────────────────────────────────────────────── */
+let colaOrdenada = [];
+let colaTodos    = [];
+let estadoTicker = {};
+
+onValue(query(colaRef, orderByChild('ts')), snap => {
+  let pend = 0; colaOrdenada = []; colaTodos = [];
+  snap.forEach(child => {
+    const v = child.val(); colaTodos.push(v);
+    if (!v.atendido) { pend++; colaOrdenada.push(v); }
   });
+  colaPendienteCount = pend;
+  document.getElementById('resumen-turno').textContent = pend;
+  actualizarTicker(); actualizarTickerModulo();
+});
 
-  // ── Confirmar y generar turno ────────────────────────────────────────────
-  // El turno se agrega al final de la cola general (FIFO), SIN módulo asignado.
-  // Cualquier operador disponible tomará el siguiente en orden, sin importar
-  // su módulo. El mensaje muestra el número REAL que le corresponde (el mismo
-  // que calcula el ticker: max(generados en cola, turnoGlobal) + 1), no una
-  // posición relativa dentro de la cola local.
-  window.confirmarTurno = async function() {
-    if (!tramiteSel) return;
-    const btn = document.getElementById('btn-confirmar');
-    btn.disabled = true;
-    btn.textContent = '⟳ Generando...';
+/* ── Firebase — estado ───────────────────────────────────────────────────── */
+onValue(estadoRef, snap => {
+  estadoTicker = snap.val() || {};
+  actualizarTicker(); actualizarTickerModulo();
+});
 
-    const tramiteObj = TRAMITES.find(t => t.id === tramiteSel);
-    const nota = document.getElementById('nota-input').value.trim();
+/* ── Firebase — contador atómico ─────────────────────────────────────────── */
+let contadorActual = 0;
+onValue(contadorRef, snap => {
+  contadorActual = snap.val() || 0;
+  actualizarTickerModulo();
+});
 
-    try {
-      // Reservar el número de forma ATÓMICA — esto avanza el contador real
-      // en Firebase, evitando que se repita en el siguiente turno generado.
-      const numeroAsignado = await reservarSiguienteNumero();
+/* ── Tickers ─────────────────────────────────────────────────────────────── */
+function pad3(n) { return String(n).padStart(3,'0'); }
+let ultimoActualTicker = null;
+let ultimoProximoTicker = null;
 
-      await push(colaRef, {
-        tramiteId:     tramiteSel,
-        tramiteNombre: tramiteObj.nombre,
-        tramiteIcono:  tramiteObj.icono,
-        nota:          nota || null,
-        ts:            Date.now(),
-        atendido:      false,
-        turno:         null   // el folio final lo confirma operador.html al llamarlo
-      });
-
-      mostrarExito(numeroAsignado, tramiteObj.nombre);
-    } catch (err) {
-      console.error('Error al generar turno:', err);
-      alert('Ocurrió un error al generar el turno. Intenta de nuevo.');
-      btn.disabled = false;
-      btn.textContent = '🎫 Generar turno';
-    }
-  };
-
-  function mostrarExito(numeroTurno, tramiteNombre) {
-    document.getElementById('exito-turno').textContent = 'T-' + pad3(numeroTurno);
-    document.getElementById('exito-detalle').innerHTML =
-      `Trámite: <strong>${tramiteNombre}</strong><br>
-       <span style="font-size:11px;color:var(--texto-dim);">Este es el número que le corresponde en la fila de espera.</span>`;
-    document.getElementById('overlay-exito').classList.add('visible');
+function actualizarTicker() {
+  const tg  = estadoTicker?.turnoGlobal || 0;
+  const ant = tg > 1 ? tg - 1 : 0;
+  const sig = tg + 1;
+  const ea = document.getElementById('ticker-anterior').querySelector('.ticker-numero');
+  const ec = document.getElementById('ticker-actual').querySelector('.ticker-numero');
+  const es = document.getElementById('ticker-siguiente').querySelector('.ticker-numero');
+  ea.textContent = ant > 0 ? 'T-'+pad3(ant) : '—';
+  ec.textContent = tg  > 0 ? 'T-'+pad3(tg)  : '—';
+  es.textContent = 'T-'+pad3(sig);
+  if (ultimoActualTicker !== null && tg !== ultimoActualTicker && tg > 0) {
+    const tr = document.getElementById('ticker-track');
+    tr.classList.add('deslizar');
+    setTimeout(() => tr.classList.remove('deslizar'), 550);
   }
+  ultimoActualTicker = tg;
+}
 
-  window.reiniciarFormulario = function() {
-    tramiteSel = null;
-    document.querySelectorAll('.tramite-card').forEach(el => el.classList.remove('selec'));
-    document.getElementById('resumen-tramite').textContent = 'Sin seleccionar';
-    document.getElementById('resumen-tramite').classList.add('vacio');
-    document.getElementById('nota-input').value = '';
-    document.getElementById('nota-contador').textContent = '0/120';
-    document.getElementById('btn-confirmar').disabled = true;
-    document.getElementById('btn-confirmar').textContent = '🎫 Generar turno';
-    document.getElementById('overlay-exito').classList.remove('visible');
-  };
+function siguienteReal() {
+  const tg = estadoTicker?.turnoGlobal || 0;
+  return Math.max(contadorActual, tg) + 1;
+}
+
+function actualizarTickerModulo() {
+  const proximo = siguienteReal();
+  const ea = document.getElementById('ticker-modulo-anterior').querySelector('.ticker-numero');
+  const ec = document.getElementById('ticker-modulo-actual').querySelector('.ticker-numero');
+  const er = document.getElementById('ticker-modulo-pendientes').querySelector('.ticker-numero');
+  ea.textContent = proximo > 1 ? 'T-'+pad3(proximo-1) : '—';
+  ec.textContent = 'T-'+pad3(proximo);
+  er.textContent = colaPendienteCount;
+  if (ultimoProximoTicker !== null && proximo !== ultimoProximoTicker) {
+    const tr = document.getElementById('ticker-track-modulo');
+    tr.classList.add('deslizar');
+    setTimeout(() => tr.classList.remove('deslizar'), 550);
+  }
+  ultimoProximoTicker = proximo;
+}
+
+/* ── Reservar número atómico ─────────────────────────────────────────────── */
+async function reservarSiguienteNumero() {
+  const tg = estadoTicker?.turnoGlobal || 0;
+  const res = await runTransaction(contadorRef, actual => {
+    return Math.max(actual || 0, tg) + 1;
+  });
+  return res.snapshot.val();
+}
+
+/* ── Confirmar turno ─────────────────────────────────────────────────────── */
+window.confirmarTurno = async function() {
+  if (!tramiteSel) return;
+  const btn = document.getElementById('btn-confirmar');
+  btn.disabled = true; btn.textContent = '⟳ Generando...';
+
+  const tramiteNombreCompleto = tramiteSel.subNombre
+    ? tramiteSel.catNombre + ' — ' + tramiteSel.subNombre
+    : tramiteSel.catNombre;
+  const nota = document.getElementById('nota-input').value.trim();
+
+  try {
+    const numeroAsignado = await reservarSiguienteNumero();
+    await push(colaRef, {
+      tramiteId:      tramiteSel.catId,
+      tramiteNombre:  tramiteNombreCompleto,
+      tramiteIcono:   tramiteSel.icono,
+      nota:           nota || null,
+      ts:             Date.now(),
+      atendido:       false,
+      turno:          null
+    });
+    mostrarExito(numeroAsignado, tramiteNombreCompleto);
+  } catch(err) {
+    console.error(err);
+    alert('Ocurrió un error. Intenta de nuevo.');
+    btn.disabled = false; btn.textContent = '🎫 Generar turno';
+  }
+};
+
+function mostrarExito(num, tramite) {
+  document.getElementById('exito-turno').textContent = 'T-'+pad3(num);
+  document.getElementById('exito-detalle').innerHTML =
+    `<strong>${tramite}</strong><br>
+     <span style="font-size:11px;color:var(--texto-d);">Este es tu número en la fila de espera.</span>`;
+  document.getElementById('overlay-exito').classList.add('visible');
+}
+
+window.reiniciarFormulario = function() {
+  tramiteSel = null; catAbierta = null;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selec','abierta'));
+  document.querySelectorAll('.sub-menu').forEach(s => s.classList.remove('abierto'));
+  document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('selec'));
+  document.querySelectorAll('.cat-badge').forEach(b => { b.textContent = '—'; });
+  document.getElementById('nota-input').value = '';
+  document.getElementById('nota-contador').textContent = '0/120';
+  document.getElementById('btn-confirmar').disabled = true;
+  document.getElementById('btn-confirmar').textContent = '🎫 Generar turno';
+  document.getElementById('overlay-exito').classList.remove('visible');
+  actualizarResumen();
+};
 </script>
 </body>
 </html>
