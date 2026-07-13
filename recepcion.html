@@ -252,7 +252,7 @@ header {
   overflow-y: auto;
   padding: clamp(16px, 2.5vw, 24px);
   display:flex; flex-direction:column; gap:20px;
-  padding-bottom: 100px; /* espacio para botón fijo */
+  padding-bottom: 120px; /* espacio para botón fijo más alto */
 }
 
 /* Títulos de sección */
@@ -423,7 +423,7 @@ header {
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-top: 1px solid var(--glass-border);
-  padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 24px calc(14px + env(safe-area-inset-bottom, 0px));
   z-index:50;
 }
 @media (max-width:720px) {
@@ -432,21 +432,43 @@ header {
 
 .btn-confirmar {
   width:100%; border:none; border-radius:var(--radio);
-  padding: 16px;
-  font-family:'DM Sans',sans-serif; font-size:16px; font-weight:800;
-  cursor:pointer; letter-spacing:0.2px;
-  display:flex; align-items:center; justify-content:center; gap:10px;
+  padding: 20px;
+  font-family:'DM Sans',sans-serif; font-size:19px; font-weight:800;
+  cursor:pointer; letter-spacing:0.3px;
+  display:flex; align-items:center; justify-content:center; gap:12px;
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   color:#fff;
-  box-shadow: 0 4px 20px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 6px 28px rgba(59,130,246,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
   transition: opacity 0.2s, transform 0.12s, box-shadow 0.2s;
 }
-.btn-confirmar:active { transform:scale(0.98); }
+.btn-confirmar:hover:not(:disabled) {
+  box-shadow: 0 8px 36px rgba(59,130,246,0.65), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-confirmar:active { transform:scale(0.97); }
 .btn-confirmar:disabled {
   background: var(--glass);
   color: var(--texto-d);
   box-shadow: none;
   cursor:not-allowed;
+}
+
+/* barra de progreso del overlay de éxito */
+.exito-progreso-wrap {
+  width:100%; height:3px;
+  background: rgba(255,255,255,0.1);
+  border-radius:2px; overflow:hidden;
+  margin-top:20px;
+}
+.exito-progreso-bar {
+  height:100%; width:100%;
+  background: var(--verde);
+  border-radius:2px;
+  transform-origin: left;
+}
+.exito-hint {
+  font-size:11px; color:var(--texto-d);
+  margin-top:8px;
+  font-family:'DM Mono',monospace;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -531,7 +553,10 @@ header {
     <div class="exito-eyebrow">Turno asignado</div>
     <div class="exito-turno" id="exito-turno">T-000</div>
     <div class="exito-detalle" id="exito-detalle"></div>
-    <button class="btn-nuevo" onclick="reiniciarFormulario()">+ Asignar otro turno</button>
+    <div class="exito-progreso-wrap">
+      <div class="exito-progreso-bar" id="exito-progreso"></div>
+    </div>
+    <div class="exito-hint">Siguiente turno en <span id="exito-cuenta">4</span>s…</div>
   </div>
 </div>
 
@@ -1045,12 +1070,72 @@ window.confirmarTurno = async function() {
   }
 };
 
+// ── Audio (Web Audio API) ────────────────────────────────────────────────
+let audioCtx = null;
+function obtenerAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+document.addEventListener('click', obtenerAudioCtx, { once: false });
+document.addEventListener('touchstart', obtenerAudioCtx, { once: false });
+
+function sonarTurno() {
+  try {
+    const ctx   = obtenerAudioCtx();
+    const ahora = ctx.currentTime;
+    // Dos notas cortas ascendentes — tipo "ping" de confirmación
+    [{ freq:660, t:0, dur:0.12 }, { freq:880, t:0.15, dur:0.18 }].forEach(({ freq, t, dur }) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ahora + t);
+      gain.gain.setValueAtTime(0, ahora + t);
+      gain.gain.linearRampToValueAtTime(0.4, ahora + t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ahora + t + dur);
+      osc.start(ahora + t);
+      osc.stop(ahora + t + dur + 0.05);
+    });
+  } catch(e) { console.warn('Audio:', e); }
+}
+
+// ── Éxito: muestra 4s, barra de progreso, luego reinicia automáticamente ──
+let exitoTimer = null;
+let exitoCuentaTimer = null;
+
 function mostrarExito(num, tramite) {
+  sonarTurno();
   document.getElementById('exito-turno').textContent = 'T-'+pad3(num);
   document.getElementById('exito-detalle').innerHTML =
     `<strong>${tramite}</strong><br>
-     <span style="font-size:11px;color:var(--texto-d);">Este es tu número en la fila de espera.</span>`;
+     <span style="font-size:11px;color:var(--texto-d);">En fila de espera.</span>`;
   document.getElementById('overlay-exito').classList.add('visible');
+
+  // Barra de progreso: vaciar en 4s con CSS transition
+  const barra = document.getElementById('exito-progreso');
+  barra.style.transition = 'none';
+  barra.style.transform  = 'scaleX(1)';
+  void barra.offsetWidth; // reflow
+  barra.style.transition = 'transform 4s linear';
+  barra.style.transform  = 'scaleX(0)';
+
+  // Cuenta regresiva
+  let cuenta = 4;
+  document.getElementById('exito-cuenta').textContent = cuenta;
+  if (exitoCuentaTimer) clearInterval(exitoCuentaTimer);
+  exitoCuentaTimer = setInterval(() => {
+    cuenta--;
+    const el = document.getElementById('exito-cuenta');
+    if (el) el.textContent = cuenta;
+    if (cuenta <= 0) clearInterval(exitoCuentaTimer);
+  }, 1000);
+
+  // Auto-cierre y reinicio
+  if (exitoTimer) clearTimeout(exitoTimer);
+  exitoTimer = setTimeout(() => {
+    reiniciarFormulario();
+  }, 4000);
 }
 
 window.reiniciarFormulario = function() {
