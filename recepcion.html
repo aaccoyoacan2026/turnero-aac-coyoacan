@@ -60,6 +60,218 @@ input,textarea { -webkit-user-select:text; user-select:text; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   TEMA CLARO
+   Sobreescribe solo los tokens de color; las reglas de layout no cambian.
+════════════════════════════════════════════════════════════════════════════ */
+body.tema-claro {
+  --bg:               #f0f4ff;
+  --glass:            rgba(255,255,255,0.65);
+  --glass-b:          rgba(255,255,255,0.80);
+  --glass-border:     rgba(100,120,200,0.18);
+  --glass-border-hover: rgba(100,120,200,0.35);
+  --texto:            #1e2a4a;
+  --texto-m:          #4a5a80;
+  --texto-d:          #8090b0;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 15% 10%, rgba(59,130,246,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(16,185,129,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 60% at 60% 40%, rgba(168,85,247,0.04) 0%, transparent 60%);
+  color: var(--texto);
+}
+body.tema-claro header {
+  background: rgba(240,244,255,0.80);
+  border-color: var(--glass-border);
+}
+body.tema-claro .col-izq {
+  border-color: var(--glass-border);
+}
+body.tema-claro .ticker-wrap {
+  border-color: var(--glass-border);
+}
+body.tema-claro .barra-inferior {
+  background: rgba(240,244,255,0.90);
+  border-color: var(--glass-border);
+}
+body.tema-claro .logo      { color: #1e2a4a; }
+body.tema-claro .logo-sub  { color: var(--texto-d); }
+body.tema-claro ::-webkit-scrollbar-thumb { background: var(--glass-border); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CLAYMORFISMO
+   Superficies "hinchadas" con sombras de color, bordes gruesos suaves,
+   sin blur — las formas parecen hechas de arcilla o goma foam.
+════════════════════════════════════════════════════════════════════════════ */
+body.clay {
+  --clay-radio:   22px;
+  --clay-border:  3px;
+  --blur:         blur(0px);   /* clay no usa blur */
+  --blur-sm:      blur(0px);
+  --glass-border: rgba(255,255,255,0.9);
+  background: #1a1040;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 10%, #2d1b8e 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, #0f3d6e 0%, transparent 55%);
+}
+/* Clay + Claro */
+body.clay.tema-claro {
+  background: #e8e0ff;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 10%, #d4c8ff 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, #c8e8ff 0%, transparent 55%);
+  --texto:   #2a1a6e;
+  --texto-m: #5a4a9e;
+  --texto-d: #9a8abe;
+}
+
+/* Tarjetas clay: sin backdrop-filter, sombra de color, borde blanco grueso */
+body.clay .cat-btn,
+body.clay .nota-input,
+body.clay .exito-caja,
+body.clay .login-caja,
+body.clay .res-card,
+body.clay .ticker-wrap {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-width: var(--clay-border) !important;
+  border-radius: var(--clay-radio) !important;
+}
+
+/* Categorías clay: cada una con su color de sombra */
+body.clay .cat-btn {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.6) !important;
+  box-shadow:
+    0 8px 0 rgba(0,0,0,0.25),
+    0 12px 20px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  transform: translateY(-2px);
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+body.clay .cat-btn:active {
+  transform: translateY(2px) !important;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.25),
+    0 4px 8px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.2) !important;
+}
+body.clay .cat-btn.selec {
+  box-shadow:
+    0 8px 0 color-mix(in srgb, var(--cat-color, #3b82f6) 60%, black),
+    0 12px 24px color-mix(in srgb, var(--cat-color, #3b82f6) 40%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+body.clay .sub-item {
+  border-radius: 14px !important;
+  border: 2px solid rgba(255,255,255,0.3) !important;
+  margin-bottom: 4px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.12s, box-shadow 0.12s !important;
+}
+body.clay .sub-item:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15) !important;
+}
+body.clay .sub-item.selec {
+  box-shadow:
+    0 4px 0 color-mix(in srgb, var(--cat-color,#3b82f6) 60%, black),
+    inset 0 1px 0 rgba(255,255,255,0.3) !important;
+}
+
+body.clay .btn-confirmar {
+  border-radius: var(--clay-radio) !important;
+  border: 3px solid rgba(255,255,255,0.7) !important;
+  box-shadow:
+    0 8px 0 #1a3a8a,
+    0 14px 28px rgba(59,130,246,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.4) !important;
+  transform: translateY(-3px);
+  transition: transform 0.12s, box-shadow 0.12s !important;
+}
+body.clay .btn-confirmar:active:not(:disabled) {
+  transform: translateY(3px) !important;
+  box-shadow: 0 2px 0 #1a3a8a, 0 4px 12px rgba(59,130,246,0.3) !important;
+}
+body.clay .btn-confirmar:disabled {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+body.clay .ticker-card.central::before {
+  border-radius: 16px !important;
+  backdrop-filter: none !important;
+  border-width: 2px !important;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+body.clay .exito-caja {
+  background: rgba(255,255,255,0.15) !important;
+  border: 3px solid rgba(255,255,255,0.7) !important;
+  box-shadow: 0 12px 0 rgba(0,0,0,0.2), 0 20px 40px rgba(0,0,0,0.4) !important;
+}
+
+body.clay .nota-input {
+  border: 3px solid rgba(255,255,255,0.5) !important;
+  background: rgba(255,255,255,0.10) !important;
+  box-shadow: inset 0 3px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Clay claro: sombras de color pastel */
+body.clay.tema-claro .cat-btn {
+  background: rgba(255,255,255,0.80) !important;
+  border-color: rgba(255,255,255,1) !important;
+  box-shadow:
+    0 8px 0 rgba(180,160,255,0.4),
+    0 12px 20px rgba(120,100,200,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body.clay.tema-claro .cat-btn.selec {
+  box-shadow:
+    0 8px 0 color-mix(in srgb, var(--cat-color,#3b82f6) 50%, white),
+    0 12px 24px color-mix(in srgb, var(--cat-color,#3b82f6) 30%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body.clay.tema-claro .btn-confirmar {
+  box-shadow:
+    0 8px 0 #1d4ed8,
+    0 14px 28px rgba(59,130,246,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.6) !important;
+}
+body.clay.tema-claro .exito-caja {
+  background: rgba(255,255,255,0.90) !important;
+  box-shadow: 0 12px 0 rgba(180,160,255,0.3), 0 20px 40px rgba(120,100,200,0.2) !important;
+}
+
+/* ── BOTONES DE TEMA ─────────────────────────────────────────────────────── */
+.btn-tema {
+  background: var(--glass);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  width: 34px; height: 34px;
+  cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.btn-tema:hover  { background: var(--glass-b); }
+.btn-tema:active { transform: scale(0.93); }
+.btn-tema.activo {
+  background: var(--acento-d);
+  border-color: var(--acento);
+  box-shadow: 0 0 0 2px var(--acento-d);
+}
+body.clay .btn-tema {
+  border-width: 2px;
+  border-color: rgba(255,255,255,0.6);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    LOGIN
 ════════════════════════════════════════════════════════════════════════════ */
 .login-overlay {
@@ -566,7 +778,11 @@ header {
     <div class="logo">AAC Coyoacán</div>
     <div class="logo-sub">Recepción · Generar turno</div>
   </div>
-  <div class="chip conectando" id="badge-conexion">⟳ Conectando</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="btn-tema" id="btn-luz"  onclick="toggleLuz()"  title="Cambiar brillo">🌙</button>
+    <button class="btn-tema" id="btn-clay" onclick="toggleClay()" title="Activar Claymorfismo">🧁</button>
+    <div class="chip conectando" id="badge-conexion">⟳ Conectando</div>
+  </div>
 </header>
 
 <!-- ── LAYOUT ─────────────────────────────────────────────────────────────── -->
@@ -1137,6 +1353,36 @@ function mostrarExito(num, tramite) {
     reiniciarFormulario();
   }, 4000);
 }
+
+// ── TEMAS: oscuro/claro + claymorfismo ─────────────────────────────────
+const TEMA_LUZ_KEY  = 'recepcion_luz';   // 'claro' | 'oscuro'
+const TEMA_CLAY_KEY = 'recepcion_clay';  // 'si' | 'no'
+
+function aplicarTemas() {
+  const luz  = localStorage.getItem(TEMA_LUZ_KEY)  === 'claro';
+  const clay = localStorage.getItem(TEMA_CLAY_KEY) === 'si';
+  document.body.classList.toggle('tema-claro', luz);
+  document.body.classList.toggle('clay', clay);
+  const btnLuz  = document.getElementById('btn-luz');
+  const btnClay = document.getElementById('btn-clay');
+  if (btnLuz)  { btnLuz.textContent  = luz  ? '☀️' : '🌙'; btnLuz.classList.toggle('activo', luz); }
+  if (btnClay) { btnClay.classList.toggle('activo', clay); }
+}
+
+window.toggleLuz = function() {
+  const esClaro = document.body.classList.contains('tema-claro');
+  localStorage.setItem(TEMA_LUZ_KEY, esClaro ? 'oscuro' : 'claro');
+  aplicarTemas();
+};
+
+window.toggleClay = function() {
+  const esClay = document.body.classList.contains('clay');
+  localStorage.setItem(TEMA_CLAY_KEY, esClay ? 'no' : 'si');
+  aplicarTemas();
+};
+
+// Aplicar al cargar
+aplicarTemas();
 
 window.reiniciarFormulario = function() {
   tramiteSel = null; catAbierta = null;

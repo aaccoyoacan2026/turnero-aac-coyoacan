@@ -337,6 +337,54 @@
     border-color: rgba(245,158,11,0.5);
   }
 
+  /* Botón de pausa */
+  .btn-pausa {
+    background: rgba(251,191,36,0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(251,191,36,0.3);
+  }
+  .btn-pausa:hover:not(:disabled) {
+    background: rgba(251,191,36,0.2);
+    border-color: rgba(251,191,36,0.5);
+  }
+  .btn-pausa.en-pausa {
+    background: rgba(16,185,129,0.12);
+    color: #10b981;
+    border-color: rgba(16,185,129,0.4);
+    animation: pulso-pausa 1.8s ease-in-out infinite;
+  }
+  @keyframes pulso-pausa {
+    0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    50%      { box-shadow: 0 0 0 4px rgba(16,185,129,0.12); }
+  }
+
+  /* Stat turnos en espera */
+  .stat-espera .stat-valor-espera { color: var(--azul); }
+  .stat-espera.alerta .stat-valor-espera { color: var(--rojo, #ef4444); }
+
+  /* Banner de pausa — se muestra encima del panel cuando el módulo está en pausa */
+  .banner-pausa {
+    display: none;
+    background: rgba(251,191,36,0.1);
+    border: 1.5px solid rgba(251,191,36,0.35);
+    border-radius: var(--radio);
+    padding: 14px 18px;
+    font-size: 13px; font-weight: 600;
+    color: #fbbf24;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .banner-pausa.visible { display: block; }
+
+  /* Nombre del ejecutivo en la tarjeta de módulo */
+  .mod-ejecutivo {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--texto-dim);
+    margin-bottom: 4px;
+  }
+  .tarjeta-modulo.yo .mod-ejecutivo { color: var(--verde-claro); }
+
   /* ─── TARJETA PRÓXIMO TURNO EN ESPERA ────────────────────────────────────── */
   .card-pendiente {
     display: flex; align-items: center; gap: 14px;
@@ -654,6 +702,115 @@
   footer.principal { display: none; }
   footer.principal.activo { display: block; }
 
+  /* ─── TEMA CLARO ────────────────────────────────────────────────────────── */
+  body.tema-claro {
+    --bg:          #f1f5f9;
+    --surface:     #ffffff;
+    --surface-2:   #f8fafc;
+    --surface-3:   #f1f5f9;
+    --borde:       #e2e8f0;
+    --borde-suave: #e2e8f0;
+    --texto:       #0f172a;
+    --texto-suave: #475569;
+    --texto-dim:   #94a3b8;
+    background: var(--bg);
+  }
+  body.tema-claro .login-overlay { background: var(--bg); }
+  body.tema-claro header.principal { background: rgba(255,255,255,0.9); border-color: var(--borde); }
+  body.tema-claro .card { background: #fff; border-color: var(--borde); }
+  body.tema-claro .stat-card { background: #fff; border-color: var(--borde); }
+  body.tema-claro .tarjeta-modulo { background: #fff; border-color: var(--borde); }
+  body.tema-claro .historial-lista { background: #fff; border-color: var(--borde); }
+  body.tema-claro .historial-item:hover { background: #f8fafc; }
+  body.tema-claro footer.principal { color: var(--texto-dim); }
+
+  .btn-tema {
+    background: none; border: 1px solid var(--borde, rgba(255,255,255,0.15));
+    border-radius: 8px; width: 32px; height: 32px;
+    cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .btn-tema:hover { background: rgba(255,255,255,0.1); }
+  body.tema-claro .btn-tema { border-color: var(--borde); }
+  body.tema-claro .btn-tema:hover { background: rgba(0,0,0,0.05); }
+
+  /* ─── CRONÓMETRO ──────────────────────────────────────────────────────────── */
+  .stat-cronometro { position: relative; overflow: hidden; }
+  .stat-valor-crono {
+    font-family: 'DM Mono', monospace !important;
+    font-size: 26px !important;
+    transition: color 0.3s;
+  }
+  .stat-cronometro.normal   .stat-valor-crono { color: var(--verde-claro, #16a34a); }
+  .stat-cronometro.atencion .stat-valor-crono { color: var(--amarillo, #f59e0b); }
+  .stat-cronometro.exceso   .stat-valor-crono { color: var(--rojo-claro, #dc2626); animation: crono-alerta 1s ease-in-out infinite; }
+  @keyframes crono-alerta { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* ─── POPUP NOTA DE RECEPCIÓN ────────────────────────────────────────────── */
+  .nota-popup {
+    display: none;
+    position: fixed;
+    top: 80px; left: 50%; transform: translateX(-50%);
+    z-index: 300;
+    cursor: pointer;
+  }
+  .nota-popup.visible { display: block; animation: nota-entra 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes nota-entra {
+    from { opacity:0; transform:translateX(-50%) translateY(-12px) scale(0.95); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+  }
+  .nota-popup-inner {
+    background: rgba(245,158,11,0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(245,158,11,0.45);
+    border-radius: 14px;
+    padding: 14px 20px;
+    min-width: 260px; max-width: min(420px, 90vw);
+    box-shadow: 0 8px 32px rgba(245,158,11,0.2);
+  }
+  .nota-popup-label {
+    font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--amarillo, #f59e0b);
+    margin-bottom: 6px;
+  }
+  .nota-popup-texto {
+    font-size: 14px; font-weight: 500;
+    color: var(--texto);
+    line-height: 1.5;
+  }
+  .nota-popup-hint {
+    font-size: 10px; color: var(--texto-suave, #475569);
+    margin-top: 8px; text-align: right;
+  }
+
+  /* ─── ALERTA DE INACTIVIDAD ─────────────────────────────────────────────── */
+  .alerta-inactividad {
+    display: none;
+    position: fixed;
+    bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 200;
+    background: rgba(239,68,68,0.12);
+    border: 1.5px solid rgba(239,68,68,0.5);
+    border-radius: 14px;
+    padding: 14px 22px;
+    font-size: 13px; font-weight: 600;
+    color: #f87171;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(239,68,68,0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: inact-flicker 1.5s ease-in-out infinite;
+    white-space: nowrap;
+  }
+  .alerta-inactividad.visible { display: block; }
+  @keyframes inact-flicker {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.65; }
+  }
+
   /* ─── ANIMACIÓN ENTRADA ──────────────────────────────────────────────────── */
   .card, .stats-grid, .acciones-grid {
     animation: entrada 0.4s ease both;
@@ -721,6 +878,7 @@
     <span class="header-sub">Panel de Operador</span>
   </div>
   <div class="header-der">
+    <button class="btn-tema" id="btn-tema" onclick="toggleTema()" title="Cambiar tema">🌙</button>
     <div class="chip conectando" id="badge-conexion">⟳ Conectando</div>
     <div class="chip chip-vivo">En vivo</div>
   </div>
@@ -731,18 +889,33 @@
   <!-- Aviso -->
   <div class="aviso" id="aviso-modulo">Selecciona tu módulo antes de operar el turnero.</div>
 
+  <!-- Popup de nota de recepción (aparece al llamar un turno con nota) -->
+  <div class="nota-popup" id="nota-popup" onclick="cerrarNotaPopup()">
+    <div class="nota-popup-inner">
+      <div class="nota-popup-label">📝 Nota de Recepción</div>
+      <div class="nota-popup-texto" id="nota-popup-texto"></div>
+      <div class="nota-popup-hint">Toca para cerrar</div>
+    </div>
+  </div>
+
+  <!-- Banner de pausa -->
+  <div class="banner-pausa" id="banner-pausa">
+    ☕ Módulo en descanso — No se están llamando turnos<br>
+    <span style="font-size:11px;font-weight:400;opacity:0.8;">Presiona "Reanudar atención" cuando estés listo</span>
+  </div>
+
   <!-- Selector de módulo -->
   <div class="card card-modulo">
     <span class="modulo-label-texto">Módulo asignado</span>
     <div class="select-wrap">
       <select class="select-modulo" id="sel-modulo">
         <option value="">— Seleccionar módulo —</option>
-        <option value="1">Módulo 1</option>
-        <option value="2">Módulo 2</option>
-        <option value="3">Módulo 3</option>
-        <option value="4">Módulo 4</option>
-        <option value="5">Módulo 5</option>
-        <option value="6">Módulo 6</option>
+        <option value="1">Módulo 1 · Samuel</option>
+        <option value="2">Módulo 2 · Mercedes</option>
+        <option value="3">Módulo 3 · Silvia</option>
+        <option value="4">Módulo 4 · Oscar</option>
+        <option value="5">Módulo 5 · Jonathan</option>
+        <option value="6">Módulo 6 · Lourdes</option>
       </select>
     </div>
   </div>
@@ -767,6 +940,14 @@
       <div class="stat-label">Atendidos hoy</div>
       <div class="stat-valor" id="total-atendidos">0</div>
     </div>
+    <div class="stat-card stat-espera">
+      <div class="stat-label">En espera</div>
+      <div class="stat-valor stat-valor-espera" id="turnos-en-espera">0</div>
+    </div>
+    <div class="stat-card stat-cronometro" id="stat-cronometro">
+      <div class="stat-label">Tiempo en atención</div>
+      <div class="stat-valor stat-valor-crono" id="crono-display">—</div>
+    </div>
   </div>
 
   <!-- Próximo turno en espera (asignado desde Recepción) -->
@@ -784,6 +965,9 @@
     <button class="btn-accion btn-llamar" id="btn-llamar" onclick="llamarSiguiente()" disabled>
       <span class="btn-icono">▶</span>
       Llamar siguiente turno
+    </button>
+    <button class="btn-accion btn-pausa" id="btn-pausa" onclick="togglePausa()" disabled>
+      ☕ Tomar un descanso
     </button>
     <button class="btn-accion btn-regresar" id="btn-regresar" onclick="regresarTurno()" disabled>
       ◀ Regresar turno
@@ -818,6 +1002,11 @@
 
 </div>
 
+<!-- Alerta de inactividad (aparece al pasar 20 min sin llamar turno) -->
+<div class="alerta-inactividad" id="alerta-inactividad" onclick="ocultarAlertaInactividad()">
+  ⚠ Más de 20 min sin llamar un turno · Toca aquí para cerrar este aviso
+</div>
+
 <footer class="principal">Sistema de Turnos Digital · SGÍA · AAC Coyoacán · Firebase Realtime Database</footer>
 
 <script type="module">
@@ -834,15 +1023,24 @@
   const db   = getDatabase(app);
   const MODS = 6;
 
+  const NOMBRES_MODULO = {
+    1: 'Samuel', 2: 'Mercedes', 3: 'Silvia',
+    4: 'Oscar',  5: 'Jonathan', 6: 'Lourdes'
+  };
+
   let miModulo        = null;
+  let enPausa         = false;
+  let timerInactividad = null;   // setTimeout de alerta de 20 min
+  let tsUltimaLlamada  = null;   // timestamp de la última vez que se llamó un turno
   let estadoActual    = null;
   let historialActual = [];
 
-  const estadoRef    = ref(db, 'estado');
-  const historialRef = ref(db, 'historial');
-  const accesoRef    = ref(db, 'config/acceso');
-  const colaRef       = ref(db, 'cola');
+  const estadoRef            = ref(db, 'estado');
+  const historialRef         = ref(db, 'historial');
+  const accesoRef            = ref(db, 'config/acceso');
+  const colaRef              = ref(db, 'cola');
   const contadorRecepcionRef = ref(db, 'config/ultimoNumeroRecepcion');
+  const panelRef             = ref(db, 'panel');  // datos en tiempo real para supervisor
 
   // ── AUTENTICACIÓN ──────────────────────────────────────────────────────────
   const MAX_INTENTOS = 5;
@@ -1001,6 +1199,18 @@
     renderizarHistorial();
   });
 
+  // ── Escuchar cola para mostrar cuántos turnos están en espera ─────────────
+  onValue(query(colaRef, orderByChild('ts')), snap => {
+    let pendientes = 0;
+    snap.forEach(child => { if (!child.val().atendido) pendientes++; });
+    const el = document.getElementById('turnos-en-espera');
+    if (el) {
+      el.textContent = pendientes;
+      const card = el.closest('.stat-espera');
+      if (card) card.classList.toggle('alerta', pendientes > 10);
+    }
+  });
+
   // ── Escuchar cola (turnos asignados desde Recepción, sin atender) ───────────
   // Se ordena por ts (orden de llegada) para tomar siempre el más antiguo primero.
   let colaCompleta = [];   // [{key, modulo, tramiteNombre, tramiteIcono, nota, ts}, ...]
@@ -1080,6 +1290,23 @@
             turno: turnoFinal
           });
         }
+
+        // Actualizar panel del supervisor con la última llamada de este módulo
+        tsUltimaLlamada = Date.now();
+        await actualizarPanelModulo({
+          estado:        'activo',
+          ultimaLlamada: tsUltimaLlamada,
+          ultimoTurno:   turnoFinal,
+        });
+
+        // Reiniciar el timer de inactividad (empieza desde 0 con cada turno llamado)
+        iniciarTimerInactividad();
+
+        // Iniciar cronómetro de atención
+        iniciarCronometro();
+
+        // Mostrar popup de nota si el turno la trae
+        if (pendiente?.nota) mostrarNotaPopup(pendiente.nota);
       }
     } catch (err) {
       console.error('Error al llamar turno:', err);
@@ -1134,19 +1361,226 @@
     await set(colaRef, null);
   };
 
-  // ── 3. REINICIAR ──────────────────────────────────────────────────────────
-  // IMPORTANTE: también se limpia /cola. Si no se hace, los turnos generados
-  // desde Recepción antes del reinicio quedan "vivos" con su orden viejo y
-  // se desincronizan del nuevo contador (turnoGlobal) que vuelve a cero.
+  // ── 3b. PAUSA / REANUDAR ─────────────────────────────────────────────────
+  // Función auxiliar para escribir el estado del módulo al panel de Firebase
+  async function actualizarPanelModulo(campos) {
+    if (!miModulo) return;
+    try {
+      await update(ref(db, 'panel/modulos/' + miModulo), {
+        nombre: NOMBRES_MODULO[miModulo] || '',
+        modulo: miModulo,
+        ...campos,
+        ts: Date.now()
+      });
+    } catch(e) { console.warn('Panel write error:', e); }
+  }
+
+  // Inicia el timer de alerta de inactividad (20 min = 1200000 ms)
+  function iniciarTimerInactividad() {
+    detenerTimerInactividad();
+    if (enPausa) return;  // no alertar si está en pausa
+    timerInactividad = setTimeout(() => {
+      mostrarAlertaInactividad();
+    }, 20 * 60 * 1000);
+  }
+
+  function detenerTimerInactividad() {
+    if (timerInactividad) { clearTimeout(timerInactividad); timerInactividad = null; }
+    ocultarAlertaInactividad();
+  }
+
+  function mostrarAlertaInactividad() {
+    let alerta = document.getElementById('alerta-inactividad');
+    if (alerta) { alerta.classList.add('visible'); return; }
+  }
+
+  function ocultarAlertaInactividad() {
+    const alerta = document.getElementById('alerta-inactividad');
+    if (alerta) alerta.classList.remove('visible');
+  }
+
+  window.togglePausa = async function() {
+    if (!miModulo) return;
+    enPausa = !enPausa;
+    const btnLlamar = document.getElementById('btn-llamar');
+    const btnPausa  = document.getElementById('btn-pausa');
+    const banner    = document.getElementById('banner-pausa');
+    const ahora     = Date.now();
+
+    if (enPausa) {
+      btnPausa.textContent = '▶ Reanudar atención';
+      btnPausa.classList.add('en-pausa');
+      btnLlamar.disabled = true;
+      banner.classList.add('visible');
+      detenerTimerInactividad();
+      // Registrar inicio de pausa en Firebase
+      await actualizarPanelModulo({ estado: 'pausa', inicioPausa: ahora, finPausa: null });
+      await push(ref(db, 'panel/pausas'), {
+        modulo: miModulo, nombre: NOMBRES_MODULO[miModulo] || '',
+        inicio: ahora, fin: null, ts: ahora
+      });
+    } else {
+      btnPausa.textContent = '☕ Tomar un descanso';
+      btnPausa.classList.remove('en-pausa');
+      btnLlamar.disabled = false;
+      banner.classList.remove('visible');
+      iniciarTimerInactividad();
+      // Registrar fin de pausa — buscar y cerrar el registro más reciente
+      await actualizarPanelModulo({ estado: 'activo', inicioPausa: null, finPausa: ahora });
+      // Actualizar la última entrada de pausa sin fin
+      const snapPausas = await get(query(
+        ref(db, 'panel/pausas'), orderByChild('modulo')
+      ));
+      let ultimaKey = null;
+      snapPausas.forEach(child => {
+        const v = child.val();
+        if (v.modulo === miModulo && !v.fin) ultimaKey = child.key;
+      });
+      if (ultimaKey) {
+        await update(ref(db, 'panel/pausas/' + ultimaKey), { fin: ahora, duracion: ahora - (snapPausas.child(ultimaKey)?.val()?.inicio || ahora) });
+      }
+    }
+  };
+
+  // ── MODO CLARO/OSCURO ─────────────────────────────────────────────────────
+  const TEMA_KEY = 'operador_tema';
+  window.toggleTema = function() {
+    const claro = document.body.classList.toggle('tema-claro');
+    localStorage.setItem(TEMA_KEY, claro ? 'claro' : 'oscuro');
+    document.getElementById('btn-tema').textContent = claro ? '☀️' : '🌙';
+  };
+  // Aplicar tema guardado al cargar
+  if (localStorage.getItem(TEMA_KEY) === 'claro') {
+    document.body.classList.add('tema-claro');
+    const btn = document.getElementById('btn-tema');
+    if (btn) btn.textContent = '☀️';
+  }
+
+  // ── CRONÓMETRO DE ATENCIÓN ─────────────────────────────────────────────────
+  let cronoTimer   = null;
+  let cronoInicio  = null;
+
+  function iniciarCronometro() {
+    detenerCronometro();
+    cronoInicio = Date.now();
+    const card = document.getElementById('stat-cronometro');
+    if (card) card.className = 'stat-card stat-cronometro normal';
+    actualizarCronometro();
+    cronoTimer = setInterval(actualizarCronometro, 1000);
+  }
+
+  function detenerCronometro() {
+    if (cronoTimer) { clearInterval(cronoTimer); cronoTimer = null; }
+    cronoInicio = null;
+    const el = document.getElementById('crono-display');
+    if (el) el.textContent = '—';
+    const card = document.getElementById('stat-cronometro');
+    if (card) card.className = 'stat-card stat-cronometro';
+  }
+
+  function actualizarCronometro() {
+    if (!cronoInicio) return;
+    const ms  = Date.now() - cronoInicio;
+    const s   = Math.floor(ms / 1000);
+    const min = Math.floor(s / 60);
+    const seg = s % 60;
+    const txt = String(min).padStart(2,'0') + ':' + String(seg).padStart(2,'0');
+    const el   = document.getElementById('crono-display');
+    const card = document.getElementById('stat-cronometro');
+    if (el) el.textContent = txt;
+    if (card) {
+      if (min >= 10)     card.className = 'stat-card stat-cronometro exceso';
+      else if (min >= 5) card.className = 'stat-card stat-cronometro atencion';
+      else               card.className = 'stat-card stat-cronometro normal';
+    }
+  }
+
+  // ── POPUP DE NOTA ──────────────────────────────────────────────────────────
+  let notaPopupTimer = null;
+  window.cerrarNotaPopup = function() {
+    const p = document.getElementById('nota-popup');
+    if (p) p.classList.remove('visible');
+    if (notaPopupTimer) { clearTimeout(notaPopupTimer); notaPopupTimer = null; }
+  };
+
+  function mostrarNotaPopup(nota) {
+    const popup = document.getElementById('nota-popup');
+    const texto = document.getElementById('nota-popup-texto');
+    if (!popup || !texto || !nota) return;
+    texto.textContent = nota;
+    popup.classList.add('visible');
+    if (notaPopupTimer) clearTimeout(notaPopupTimer);
+    notaPopupTimer = setTimeout(() => popup.classList.remove('visible'), 8000);
+  }
+
+  // ── 3. REINICIAR — genera resumen del día antes de limpiar ────────────────
+  async function generarResumenDia() {
+    try {
+      const snapHist  = await get(historialRef);
+      const snapEst   = await get(estadoRef);
+      const estado    = snapEst.val() || {};
+      const modulos   = estado.modulos || {};
+
+      const tramiteConteo = {};
+      let totalAtendidos  = 0;
+      let mejorModulo     = { id: null, count: 0 };
+
+      // Contar tramites del historial
+      snapHist.forEach(child => {
+        const h = child.val();
+        if (h.tipo !== 'llamada') return;
+        totalAtendidos++;
+        if (h.tramiteNombre) {
+          // Normalizar: tomar solo la categoría principal (antes del " — ")
+          const cat = h.tramiteNombre.split(' — ')[0].trim();
+          tramiteConteo[cat] = (tramiteConteo[cat] || 0) + 1;
+        }
+      });
+
+      // Módulo más eficiente
+      for (let i = 1; i <= MODS; i++) {
+        const count = modulos[i]?.totalAtendidos || 0;
+        if (count > mejorModulo.count) mejorModulo = { id: i, nombre: NOMBRES_MODULO[i], count };
+      }
+
+      const fechaHoy = new Date().toISOString().slice(0,10);
+      const resumen  = {
+        fecha:          fechaHoy,
+        ts:             Date.now(),
+        totalAtendidos,
+        tramites:       tramiteConteo,
+        mejorModulo:    mejorModulo.id ? mejorModulo : null,
+        porModulo:      Object.fromEntries(
+          Array.from({length: MODS}, (_,i) => [
+            i+1,
+            { nombre: NOMBRES_MODULO[i+1], atendidos: modulos[i+1]?.totalAtendidos || 0 }
+          ])
+        )
+      };
+
+      // Guardar en /cierres/{fecha} en Firebase
+      await set(ref(db, 'cierres/' + fechaHoy), resumen);
+      console.log('Resumen del día guardado:', fechaHoy);
+    } catch(e) {
+      console.warn('Error al generar resumen:', e);
+    }
+  }
+
   window.reiniciarTurnos = async function() {
-    const primera = confirm('⚠️ ¿Reiniciar el turnero?\n\nEsta acción borrará todos los contadores, el historial Y la fila de espera de Recepción (todos los módulos). No se puede deshacer.');
+    const primera = confirm('⚠️ ¿Reiniciar el turnero?\n\nEsta acción guardará un resumen del día y borrará todos los contadores, historial y fila de espera. No se puede deshacer.');
     if (!primera) return;
     const segunda = confirm('¿Confirmas que deseas reiniciar? Esta es tu última oportunidad para cancelar.');
     if (!segunda) return;
+    // Generar y guardar resumen ANTES de limpiar
+    await generarResumenDia();
     await set(estadoRef,    estadoInicial());
     await set(historialRef, null);
     await set(colaRef,      null);
-    await set(contadorRecepcionRef, 0);  // sin esto, Recepción seguiría arrastrando el número viejo
+    await set(contadorRecepcionRef, 0);
+    // Limpiar también el panel (pausas del día anterior)
+    await set(ref(db, 'panel/pausas'), null);
+    await set(ref(db, 'panel/modulos'), null);
+    detenerCronometro();
   };
 
   // ── Render principal ───────────────────────────────────────────────────────
@@ -1155,18 +1589,21 @@
     if (!estado) return;
 
     const activo = !!miModulo;
-    document.getElementById('btn-llamar').disabled   = !activo;
+    // El botón llamar respeta también el estado de pausa
+    document.getElementById('btn-llamar').disabled   = !activo || enPausa;
     document.getElementById('btn-regresar').disabled = !activo;
+    document.getElementById('btn-pausa').disabled    = !activo;
 
     // Stats cards
-    const statMod      = document.getElementById('stat-mi-modulo');
-    const statActual   = document.getElementById('stat-turno-actual');
-    const statSig      = document.getElementById('stat-siguiente');
-    const sigEl        = document.getElementById('turno-siguiente');
+    const statMod    = document.getElementById('stat-mi-modulo');
+    const statActual = document.getElementById('stat-turno-actual');
+    const statSig    = document.getElementById('stat-siguiente');
+    const sigEl      = document.getElementById('turno-siguiente');
 
     if (miModulo) {
-      const mod = estado.modulos?.[miModulo];
-      document.getElementById('mi-modulo-num').textContent    = `Mód. ${miModulo}`;
+      const nombre = NOMBRES_MODULO[miModulo] || '';
+      const mod    = estado.modulos?.[miModulo];
+      document.getElementById('mi-modulo-num').textContent    = `${miModulo} · ${nombre}`;
       document.getElementById('mi-turno-actual').textContent  = turnoStr(mod?.turnoActual);
       document.getElementById('total-atendidos').textContent  = mod?.totalAtendidos ?? 0;
       sigEl.textContent = `T-${pad((estado.turnoGlobal || 0) + 1)}`;
@@ -1185,19 +1622,21 @@
       statSig.classList.remove('activa');
     }
 
-    // Grid módulos
+    // Grid módulos con nombres de ejecutivos
     const grid = document.getElementById('grid-modulos');
     grid.innerHTML = '';
     for (let i = 1; i <= MODS; i++) {
-      const mod    = estado.modulos?.[i] || moduloVacio(i);
-      const esYo   = i === miModulo;
-      const activo = mod.turnoActual && mod.turnoActual > 0;
-      const div    = document.createElement('div');
-      div.className = `tarjeta-modulo${esYo ? ' yo' : (activo ? ' activo' : '')}`;
-      div.innerHTML = `
+      const mod      = estado.modulos?.[i] || moduloVacio(i);
+      const esYo     = i === miModulo;
+      const estaActivo = mod.turnoActual && mod.turnoActual > 0;
+      const nombre   = NOMBRES_MODULO[i] || '';
+      const div      = document.createElement('div');
+      div.className  = `tarjeta-modulo${esYo ? ' yo' : (estaActivo ? ' activo' : '')}`;
+      div.innerHTML  = `
         ${esYo ? '<span class="etiqueta-yo">yo</span>' : ''}
+        <div class="mod-ejecutivo">${nombre}</div>
         <div class="mod-nombre">Módulo ${i}</div>
-        <div class="mod-turno${activo ? '' : ' vacio'}">${turnoStr(mod.turnoActual)}</div>
+        <div class="mod-turno${estaActivo ? '' : ' vacio'}">${turnoStr(mod.turnoActual)}</div>
         <div class="mod-count">${mod.totalAtendidos ?? 0} atendidos</div>
       `;
       grid.appendChild(div);
@@ -1228,8 +1667,21 @@
   }
 
   // ── Selector ───────────────────────────────────────────────────────────────
-  document.getElementById('sel-modulo').addEventListener('change', function() {
+  document.getElementById('sel-modulo').addEventListener('change', async function() {
+    // Salir de pausa si se cambia de módulo
+    if (enPausa) {
+      enPausa = false;
+      document.getElementById('btn-pausa').textContent = '☕ Tomar un descanso';
+      document.getElementById('btn-pausa').classList.remove('en-pausa');
+      document.getElementById('banner-pausa').classList.remove('visible');
+    }
+    detenerTimerInactividad();
     miModulo = this.value ? parseInt(this.value) : null;
+    if (miModulo) {
+      // Registrar que este módulo está activo en el panel
+      await actualizarPanelModulo({ estado: 'activo', ultimaLlamada: tsUltimaLlamada || Date.now() });
+      iniciarTimerInactividad();
+    }
     renderizar();
     renderizarPendiente();
   });
