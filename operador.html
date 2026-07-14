@@ -337,6 +337,144 @@
     border-color: rgba(245,158,11,0.5);
   }
 
+  /* ─── BOTÓN ACLARACIÓN TERMINADA ─────────────────────────────────────────── */
+  .btn-terminar {
+    background: rgba(16,185,129,0.12);
+    color: #10b981;
+    border: 1px solid rgba(16,185,129,0.35);
+    font-size: 15px;
+    grid-column: 1 / -1;
+  }
+  .btn-terminar:hover:not(:disabled) {
+    background: rgba(16,185,129,0.22);
+    border-color: rgba(16,185,129,0.6);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.10);
+  }
+  .btn-terminar:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ─── MODAL ACLARACIÓN TERMINADA ─────────────────────────────────────────── */
+  .modal-fondo {
+    display: none;
+    position: fixed; inset: 0; z-index: 400;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-fondo.visible { display: flex; }
+
+  .modal-terminar-caja {
+    background: var(--surface, #161b27);
+    border: 1px solid var(--borde, #2a3550);
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: min(480px, 100%);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    animation: modal-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes modal-in {
+    from { opacity:0; transform:translateY(16px) scale(0.96); }
+    to   { opacity:1; transform:translateY(0)    scale(1); }
+  }
+  body.tema-claro .modal-terminar-caja {
+    background: #fff;
+    border-color: #e2e8f0;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+  }
+
+  .modal-terminar-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 18px;
+  }
+  .modal-terminar-icono {
+    width: 48px; height: 48px; flex-shrink: 0;
+    background: rgba(16,185,129,0.15);
+    border: 1.5px solid rgba(16,185,129,0.35);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .modal-terminar-titulo {
+    font-size: 17px; font-weight: 800;
+    color: var(--texto, #e2e8f0);
+  }
+  body.tema-claro .modal-terminar-titulo { color: #0f172a; }
+  .modal-terminar-sub {
+    font-size: 12px; color: var(--texto-suave, #64748b);
+    margin-top: 2px;
+  }
+
+  .modal-terminar-duracion {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px; color: #34d399;
+    margin-bottom: 18px;
+  }
+  body.tema-claro .modal-terminar-duracion { color: #059669; }
+
+  .modal-terminar-campo { margin-bottom: 6px; }
+  .modal-terminar-label {
+    display: block;
+    font-size: 12px; font-weight: 700;
+    color: var(--texto-suave, #64748b);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .modal-terminar-textarea {
+    width: 100%;
+    background: var(--surface-2, #1c2333);
+    border: 1.5px solid var(--borde, #2a3550);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--texto, #e2e8f0);
+    resize: none; outline: none;
+    min-height: 90px;
+    transition: border-color 0.2s;
+  }
+  body.tema-claro .modal-terminar-textarea {
+    background: #f8fafc; border-color: #e2e8f0; color: #0f172a;
+  }
+  .modal-terminar-textarea:focus { border-color: #10b981; }
+  .modal-terminar-textarea::placeholder { color: var(--texto-dim, #475569); }
+  .modal-terminar-contador {
+    text-align: right;
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    color: var(--texto-dim, #475569);
+    margin-top: 4px; margin-bottom: 18px;
+  }
+
+  .modal-terminar-acciones {
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+  .modal-btn-cancelar {
+    background: var(--surface-2, #1c2333);
+    border: 1px solid var(--borde, #2a3550);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--texto-suave, #64748b);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  body.tema-claro .modal-btn-cancelar { background:#f1f5f9; border-color:#e2e8f0; color:#475569; }
+  .modal-btn-cancelar:hover { background: var(--surface-3, #222b3e); }
+  .modal-btn-confirmar {
+    background: #10b981;
+    border: none; border-radius: 10px;
+    padding: 10px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: white; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .modal-btn-confirmar:hover { background: #059669; box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+
   /* Botón de pausa */
   .btn-pausa {
     background: rgba(251,191,36,0.1);
@@ -969,6 +1107,9 @@
     <button class="btn-accion btn-pausa" id="btn-pausa" onclick="togglePausa()" disabled>
       ☕ Tomar un descanso
     </button>
+    <button class="btn-accion btn-terminar" id="btn-terminar" onclick="abrirModalTerminar()" disabled>
+      ✅ Aclaración terminada
+    </button>
     <button class="btn-accion btn-regresar" id="btn-regresar" onclick="regresarTurno()" disabled>
       ◀ Regresar turno
     </button>
@@ -1005,6 +1146,35 @@
 <!-- Alerta de inactividad (aparece al pasar 20 min sin llamar turno) -->
 <div class="alerta-inactividad" id="alerta-inactividad" onclick="ocultarAlertaInactividad()">
   ⚠ Más de 20 min sin llamar un turno · Toca aquí para cerrar este aviso
+</div>
+
+<!-- Modal: Aclaración terminada -->
+<div class="modal-fondo" id="modal-terminar">
+  <div class="modal-terminar-caja">
+    <div class="modal-terminar-header">
+      <div class="modal-terminar-icono">✅</div>
+      <div>
+        <div class="modal-terminar-titulo">Aclaración terminada</div>
+        <div class="modal-terminar-sub" id="modal-terminar-sub">Turno · Módulo</div>
+      </div>
+    </div>
+    <div class="modal-terminar-duracion" id="modal-terminar-duracion">
+      ⏱ Tiempo de atención: <strong id="modal-duracion-txt">—</strong>
+    </div>
+    <div class="modal-terminar-campo">
+      <label class="modal-terminar-label">
+        📝 Comentarios adicionales <span style="font-weight:400;opacity:0.6;">(opcional)</span>
+      </label>
+      <textarea id="modal-comentario" class="modal-terminar-textarea"
+        maxlength="300"
+        placeholder="Ej. Ciudadano requiere seguimiento, documentos incompletos, acuerdo de pago…"></textarea>
+      <div class="modal-terminar-contador" id="modal-contador">0 / 300</div>
+    </div>
+    <div class="modal-terminar-acciones">
+      <button class="modal-btn-cancelar" onclick="cerrarModalTerminar()">Cancelar</button>
+      <button class="modal-btn-confirmar" onclick="confirmarTerminar()">Registrar y cerrar</button>
+    </div>
+  </div>
 </div>
 
 <footer class="principal">Sistema de Turnos Digital · SGÍA · AAC Coyoacán · Firebase Realtime Database</footer>
@@ -1442,6 +1612,93 @@
     }
   };
 
+  // ── ACLARACIÓN TERMINADA ──────────────────────────────────────────────────
+  let duracionUltimaAclaracion = 0;  // ms — guardado cuando se abre el modal
+
+  window.abrirModalTerminar = function() {
+    if (!miModulo || !estadoActual?.modulos?.[miModulo]?.turnoActual) return;
+
+    const mod     = estadoActual.modulos[miModulo];
+    const turno   = mod?.turnoActual;
+    const nombre  = NOMBRES_MODULO[miModulo] || '';
+
+    // Capturar la duración exacta AHORA (el cronómetro sigue corriendo hasta cerrar)
+    duracionUltimaAclaracion = cronoInicio ? Date.now() - cronoInicio : 0;
+
+    // Rellenar el modal con datos del turno actual
+    document.getElementById('modal-terminar-sub').textContent =
+      `T-${pad(turno)} · Módulo ${miModulo} · ${nombre}`;
+
+    const mins = Math.floor(duracionUltimaAclaracion / 60000);
+    const segs = Math.floor((duracionUltimaAclaracion % 60000) / 1000);
+    document.getElementById('modal-duracion-txt').textContent =
+      String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0');
+
+    // Limpiar campo de comentarios
+    const ta = document.getElementById('modal-comentario');
+    ta.value = '';
+    document.getElementById('modal-contador').textContent = '0 / 300';
+
+    document.getElementById('modal-terminar').classList.add('visible');
+    setTimeout(() => ta.focus(), 200);
+  };
+
+  window.cerrarModalTerminar = function() {
+    document.getElementById('modal-terminar').classList.remove('visible');
+  };
+
+  window.confirmarTerminar = async function() {
+    const comentario  = document.getElementById('modal-comentario').value.trim();
+    const mod         = estadoActual?.modulos?.[miModulo];
+    const turno       = mod?.turnoActual || 0;
+    const nombre      = NOMBRES_MODULO[miModulo] || '';
+    const ahora       = Date.now();
+
+    // Formatear duración para legibilidad en Firebase
+    const mins     = Math.floor(duracionUltimaAclaracion / 60000);
+    const segs     = Math.floor((duracionUltimaAclaracion % 60000) / 1000);
+    const durTxt   = String(mins).padStart(2,'0') + ':' + String(segs).padStart(2,'0');
+    const fechaHoy = new Date().toISOString().slice(0,10);
+
+    // Registrar en Firebase bajo /cierres/{fecha}/aclaraciones
+    // Si el día ya tiene resumen parcial lo enriquece, si no lo crea
+    if (turno > 0) {
+      try {
+        await push(ref(db, 'cierres/' + fechaHoy + '/aclaraciones'), {
+          ts:        ahora,
+          hora:      horaActual(),
+          modulo:    miModulo,
+          ejecutivo: nombre,
+          turno,
+          duracion:  durTxt,
+          duracionMs: duracionUltimaAclaracion,
+          comentario: comentario || null
+        });
+      } catch(e) { console.warn('Error al registrar aclaración:', e); }
+    }
+
+    // Cerrar modal, detener cronómetro y resetear estado visual
+    cerrarModalTerminar();
+    detenerCronometro();
+
+    // Deshabilitar el botón hasta que se llame el siguiente turno
+    const btnTerm = document.getElementById('btn-terminar');
+    if (btnTerm) btnTerm.disabled = true;
+
+    duracionUltimaAclaracion = 0;
+  };
+
+  // Contador de caracteres del textarea del modal
+  document.addEventListener('DOMContentLoaded', () => {
+    const ta = document.getElementById('modal-comentario');
+    if (ta) {
+      ta.addEventListener('input', function() {
+        document.getElementById('modal-contador').textContent =
+          this.value.length + ' / 300';
+      });
+    }
+  });
+
   // ── MODO CLARO/OSCURO ─────────────────────────────────────────────────────
   const TEMA_KEY = 'operador_tema';
   window.toggleTema = function() {
@@ -1467,6 +1724,9 @@
     if (card) card.className = 'stat-card stat-cronometro normal';
     actualizarCronometro();
     cronoTimer = setInterval(actualizarCronometro, 1000);
+    // Activar el botón de terminar cuando el cronómetro inicia
+    const btnTerm = document.getElementById('btn-terminar');
+    if (btnTerm) btnTerm.disabled = false;
   }
 
   function detenerCronometro() {
@@ -1476,6 +1736,9 @@
     if (el) el.textContent = '—';
     const card = document.getElementById('stat-cronometro');
     if (card) card.className = 'stat-card stat-cronometro';
+    // Desactivar el botón de terminar cuando no hay atención en curso
+    const btnTerm = document.getElementById('btn-terminar');
+    if (btnTerm) btnTerm.disabled = true;
   }
 
   function actualizarCronometro() {
@@ -1593,6 +1856,10 @@
     document.getElementById('btn-llamar').disabled   = !activo || enPausa;
     document.getElementById('btn-regresar').disabled = !activo;
     document.getElementById('btn-pausa').disabled    = !activo;
+    // Botón terminar: solo activo cuando hay turno en curso (cronómetro corriendo)
+    const hayTurnoActual = activo && !!(estadoActual?.modulos?.[miModulo]?.turnoActual);
+    const btnTerm = document.getElementById('btn-terminar');
+    if (btnTerm) btnTerm.disabled = !hayTurnoActual || !cronoInicio;
 
     // Stats cards
     const statMod    = document.getElementById('stat-mi-modulo');
