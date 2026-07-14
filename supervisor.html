@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervisor · AAC Coyoacán</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #08111f;
+  --s1:      rgba(255,255,255,0.04);
+  --s2:      rgba(255,255,255,0.07);
+  --border:  rgba(255,255,255,0.10);
+  --border2: rgba(255,255,255,0.18);
+  --acento:  #3b82f6;
+  --verde:   #10b981;
+  --rojo:    #ef4444;
+  --naranja: #f97316;
+  --amarillo:#f59e0b;
+  --morado:  #a855f7;
+  --texto:   #e2e8f0;
+  --texto-m: #94a3b8;
+  --texto-d: #475569;
+  --blur:    blur(18px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 60% 40% at 10% 5%,  rgba(59,130,246,0.08) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 95%, rgba(16,185,129,0.06) 0%,transparent 55%);
+  color:var(--texto); min-height:100vh; overflow-x:hidden;
+}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── HEADER ── */
+header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(8,17,31,0.85);
+  backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur);
+  border-bottom:1px solid var(--border);
+  padding:14px clamp(16px,3vw,32px);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;
+}
+.h-logo{font-family:'Playfair Display',serif;font-size:17px;color:#fff;}
+.h-sub{font-size:10px;color:var(--texto-d);text-transform:uppercase;letter-spacing:0.7px;margin-top:2px;}
+.h-der{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.chip{
+  font-family:'DM Mono',monospace;font-size:9px;font-weight:600;
+  padding:4px 10px;border-radius:20px;letter-spacing:0.4px;border:1px solid transparent;
+}
+.chip.conectado   {background:rgba(16,185,129,0.15);color:#34d399;border-color:rgba(16,185,129,0.3);}
+.chip.desconectado{background:rgba(249,115,22,0.12);color:var(--naranja);border-color:rgba(249,115,22,0.3);}
+.chip.conectando  {background:rgba(71,85,105,0.2);color:var(--texto-d);border-color:var(--border);}
+.chip.readonly    {background:rgba(168,85,247,0.12);color:#c084fc;border-color:rgba(168,85,247,0.25);}
+.reloj{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:#fff;letter-spacing:2px;}
+
+/* ── LAYOUT ── */
+.page{padding:clamp(14px,2.5vw,28px);display:flex;flex-direction:column;gap:20px;max-width:1200px;margin:0 auto;}
+
+/* ── RESUMEN GLOBAL ── */
+.globales{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;
+}
+.gcard{
+  background:var(--s1);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:14px;
+  padding:16px;
+  display:flex;flex-direction:column;gap:4px;
+}
+.gcard-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--texto-d);}
+.gcard-valor{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:#fff;line-height:1;}
+.gcard-valor.azul   {color:var(--acento);}
+.gcard-valor.verde  {color:var(--verde);}
+.gcard-valor.naranja{color:var(--naranja);}
+.gcard-valor.morado {color:var(--morado);}
+
+/* ── SECCIÓN TÍTULO ── */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.sec-tit{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--texto-d);}
+.sec-line{flex:1;height:1px;background:var(--border);}
+
+/* ── GRID MÓDULOS ── */
+.modulos-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;
+}
+.mod-card{
+  background:var(--s1);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:16px;
+  padding:18px 20px;
+  position:relative;overflow:hidden;
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+.mod-card.activo {border-color:rgba(59,130,246,0.4); box-shadow:0 0 0 1px rgba(59,130,246,0.12);}
+.mod-card.pausa  {border-color:rgba(245,158,11,0.4);  box-shadow:0 0 0 1px rgba(245,158,11,0.10);}
+.mod-card.inactivo{border-color:rgba(239,68,68,0.4);   box-shadow:0 0 0 1px rgba(239,68,68,0.10);}
+.mod-card.offline{border-color:var(--border);opacity:0.55;}
+
+/* Barra de color lateral */
+.mod-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:16px 0 0 16px;
+  background:var(--texto-d);transition:background 0.3s;
+}
+.mod-card.activo::before  {background:var(--acento);}
+.mod-card.pausa::before   {background:var(--amarillo);}
+.mod-card.inactivo::before{background:var(--rojo);}
+
+.mod-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.mod-nombre-wrap{}
+.mod-ejecutivo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--texto-d);margin-bottom:3px;}
+.mod-num{font-size:18px;font-weight:800;color:#fff;}
+.mod-badge{
+  font-size:9px;font-weight:700;
+  padding:3px 9px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;
+  border:1px solid transparent;
+}
+.mod-badge.activo  {background:rgba(59,130,246,0.15);color:#60a5fa;border-color:rgba(59,130,246,0.3);}
+.mod-badge.pausa   {background:rgba(245,158,11,0.15); color:var(--amarillo);border-color:rgba(245,158,11,0.3);}
+.mod-badge.inactivo{background:rgba(239,68,68,0.12);  color:#f87171;border-color:rgba(239,68,68,0.3);}
+.mod-badge.offline {background:rgba(71,85,105,0.2);   color:var(--texto-d);border-color:var(--border);}
+
+.mod-turno-grande{
+  font-family:'DM Mono',monospace;
+  font-size:36px;font-weight:800;line-height:1;
+  color:#fff;margin-bottom:4px;
+}
+.mod-turno-grande.vacio{color:var(--border2);}
+
+.mod-stats{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.mod-stat{flex:1;text-align:center;}
+.mod-stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--texto-d);margin-bottom:3px;}
+.mod-stat-val{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--texto);}
+
+/* Tiempo desde última llamada */
+.mod-tiempo{
+  font-size:11px;color:var(--texto-d);margin-top:8px;
+  display:flex;align-items:center;gap:5px;
+}
+.mod-tiempo.alerta{color:var(--rojo);}
+.mod-tiempo.advertencia{color:var(--amarillo);}
+.mod-tiempo .dot-t{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* ── RANKING ── */
+.ranking-lista{display:flex;flex-direction:column;gap:8px;}
+.ranking-item{
+  background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:12px 16px;
+  display:flex;align-items:center;gap:14px;
+}
+.rank-pos{
+  font-family:'DM Mono',monospace;font-size:13px;font-weight:800;
+  color:var(--texto-d);width:22px;text-align:center;flex-shrink:0;
+}
+.rank-pos.oro  {color:#f59e0b;}
+.rank-pos.plata{color:#94a3b8;}
+.rank-pos.bronce{color:#b45309;}
+.rank-info{flex:1;}
+.rank-nombre{font-size:14px;font-weight:700;color:#fff;}
+.rank-modulo{font-size:10px;color:var(--texto-d);margin-top:2px;}
+.rank-barra-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.rank-barra{height:100%;border-radius:3px;background:var(--acento);transition:width 0.4s ease;}
+.rank-num{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--acento);min-width:32px;text-align:right;}
+
+/* ── ESTADÍSTICAS POR TRÁMITE ── */
+.tramites-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;
+}
+.tramite-stat{
+  background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.tramite-icono{
+  font-size:22px;flex-shrink:0;
+  width:40px;height:40px;background:var(--s2);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+.tramite-info{flex:1;min-width:0;}
+.tramite-nombre{font-size:12px;font-weight:700;color:var(--texto);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tramite-count{font-family:'DM Mono',monospace;font-size:22px;font-weight:800;
+  color:var(--acento);}
+.tramite-pct{font-size:10px;color:var(--texto-d);margin-top:2px;}
+
+/* ── SELECTOR DE CIERRE ── */
+.sel-cierre{
+  background:var(--s2);border:1px solid var(--border);border-radius:8px;
+  padding:5px 10px;font-size:11px;font-family:'DM Sans',sans-serif;
+  color:var(--texto);outline:none;cursor:pointer;
+}
+.sel-cierre option{background:var(--bg);}
+
+/* ── CIERRE DE DÍA ── */
+.cierre-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  padding:20px;
+}
+.cierre-hdr{display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.cierre-fecha{font-size:16px;font-weight:700;color:#fff;}
+.cierre-total{font-family:'DM Mono',monospace;font-size:28px;font-weight:800;
+  color:var(--acento);}
+.cierre-label{font-size:10px;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.6px;color:var(--texto-d);}
+.cierre-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;margin-top:14px;}
+.cierre-sec{background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;}
+.cierre-sec-tit{font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.8px;color:var(--texto-d);margin-bottom:8px;}
+.cierre-mod-fila{display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;padding:3px 0;border-bottom:1px solid var(--border);}
+.cierre-mod-fila:last-child{border-bottom:none;}
+.cierre-mod-nombre{color:var(--texto);}
+.cierre-mod-count{font-family:'DM Mono',monospace;font-weight:700;color:var(--acento);}
+.cierre-tram-fila{display:flex;justify-content:space-between;font-size:12px;
+  padding:3px 0;border-bottom:1px solid var(--border);}
+.cierre-tram-fila:last-child{border-bottom:none;}
+.cierre-tram-nom{color:var(--texto);}
+.cierre-tram-n{font-family:'DM Mono',monospace;font-weight:700;color:var(--morado);}
+.cierre-estrella{color:var(--amarillo);font-weight:700;}
+
+/* ── HISTORIAL DE PAUSAS ── */
+.pausas-lista{
+  background:var(--s1);border:1px solid var(--border);border-radius:14px;
+  max-height:260px;overflow-y:auto;
+}
+.pausa-item{
+  display:grid;grid-template-columns:auto 1fr auto auto;
+  align-items:center;gap:10px;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  font-size:12px;
+}
+.pausa-item:last-child{border-bottom:none;}
+.pausa-icono{font-size:14px;}
+.pausa-nombre{font-weight:700;color:var(--texto);}
+.pausa-hora{font-family:'DM Mono',monospace;font-size:10px;color:var(--texto-d);}
+.pausa-dur{
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:700;
+  color:var(--amarillo);
+  background:rgba(245,158,11,0.1);
+  border:1px solid rgba(245,158,11,0.25);
+  padding:2px 8px;border-radius:8px;white-space:nowrap;
+}
+.pausa-activa{color:var(--naranja);font-weight:700;font-size:10px;animation:parpadeo 1.2s ease-in-out infinite;}
+@keyframes parpadeo{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.pausas-vacio{padding:20px;text-align:center;font-size:12px;color:var(--texto-d);}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="h-logo">AAC Coyoacán</div>
+    <div class="h-sub">Panel de Supervisor · Solo lectura</div>
+  </div>
+  <div class="h-der">
+    <div class="chip readonly">👁 Supervisor</div>
+    <div class="chip conectando" id="badge-conn">⟳ Conectando</div>
+    <div class="reloj" id="reloj">00:00:00</div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- Resumen global -->
+  <div class="globales">
+    <div class="gcard">
+      <div class="gcard-label">Total atendidos hoy</div>
+      <div class="gcard-valor azul"   id="g-total">0</div>
+    </div>
+    <div class="gcard">
+      <div class="gcard-label">Módulos activos</div>
+      <div class="gcard-valor verde"  id="g-activos">0 / 6</div>
+    </div>
+    <div class="gcard">
+      <div class="gcard-label">En pausa ahora</div>
+      <div class="gcard-valor naranja" id="g-pausa">0</div>
+    </div>
+    <div class="gcard">
+      <div class="gcard-label">Turnos en espera</div>
+      <div class="gcard-valor morado" id="g-espera">0</div>
+    </div>
+    <div class="gcard">
+      <div class="gcard-label">Último turno</div>
+      <div class="gcard-valor" id="g-ultimo">—</div>
+    </div>
+  </div>
+
+  <!-- Estado de módulos -->
+  <div>
+    <div class="sec-hdr"><span class="sec-tit">Estado de módulos en tiempo real</span><div class="sec-line"></div></div>
+    <div class="modulos-grid" id="modulos-grid"></div>
+  </div>
+
+  <!-- Ranking de atención -->
+  <div>
+    <div class="sec-hdr"><span class="sec-tit">Ranking · Turnos atendidos hoy</span><div class="sec-line"></div></div>
+    <div class="ranking-lista" id="ranking-lista"></div>
+  </div>
+
+  <!-- Estadísticas por trámite -->
+  <div>
+    <div class="sec-hdr"><span class="sec-tit">Trámites atendidos en esta sesión</span><div class="sec-line"></div></div>
+    <div class="tramites-grid" id="tramites-grid">
+      <div class="pausas-vacio">Sin datos de trámites aún</div>
+    </div>
+  </div>
+
+  <!-- Cierres de día anteriores -->
+  <div>
+    <div class="sec-hdr">
+      <span class="sec-tit">Cierres de día</span>
+      <div class="sec-line"></div>
+      <select id="sel-cierre" class="sel-cierre" onchange="cargarCierre(this.value)">
+        <option value="">— Seleccionar día —</option>
+      </select>
+    </div>
+    <div id="cierre-detalle" class="cierre-card" style="display:none;"></div>
+    <div id="cierre-vacio" class="pausas-vacio">Selecciona un día para ver el resumen</div>
+  </div>
+
+  <!-- Historial de pausas -->
+  <div>
+    <div class="sec-hdr"><span class="sec-tit">Historial de pausas (hoy)</span><div class="sec-line"></div></div>
+    <div class="pausas-lista" id="pausas-lista">
+      <div class="pausas-vacio">Sin pausas registradas hoy</div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, get, query, orderByChild, limitToLast }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  projectId:   "turnero-aac-coyoacan",
+  databaseURL: "https://turnero-aac-coyoacan-default-rtdb.firebaseio.com/"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const NOMBRES = { 1:'Samuel', 2:'Mercedes', 3:'Silvia', 4:'Oscar', 5:'Jonathan', 6:'Lourdes' };
+const MODS    = 6;
+
+// ── Conexión ──────────────────────────────────────────────────────────────
+onValue(ref(db, '.info/connected'), snap => {
+  const b = document.getElementById('badge-conn');
+  if (snap.val()) { b.textContent='✔ En línea'; b.className='chip conectado'; }
+  else            { b.textContent='✖ Sin señal'; b.className='chip desconectado'; }
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function pad3(n)  { return String(n).padStart(3,'0'); }
+function turnoStr(t) { return (t && t>0) ? 'T-'+pad3(t) : '—'; }
+
+function durStr(ms) {
+  if (!ms || ms < 0) return '—';
+  const s = Math.floor(ms/1000);
+  const m = Math.floor(s/60);
+  const h = Math.floor(m/60);
+  if (h > 0)  return h+'h '+String(m%60).padStart(2,'0')+'m';
+  if (m > 0)  return m+'m '+String(s%60).padStart(2,'0')+'s';
+  return s+'s';
+}
+
+function tiempoDesde(ts) {
+  if (!ts) return null;
+  return Date.now() - ts;
+}
+
+function formatHora(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+}
+
+// ── Estado local ──────────────────────────────────────────────────────────
+let estadoActual    = {};
+let panelActual     = {};
+let colaCount       = 0;
+let pausasHoy       = [];
+let historialActual = [];
+
+// ── Listeners ──────────────────────────────────────────────────────────────
+onValue(ref(db, 'estado'), snap => {
+  estadoActual = snap.val() || {};
+  renderizar();
+});
+
+onValue(ref(db, 'panel'), snap => {
+  panelActual = snap.val() || {};
+  if (panelActual.pausas) {
+    pausasHoy = Object.values(panelActual.pausas).sort((a,b) => b.ts - a.ts);
+  } else {
+    pausasHoy = [];
+  }
+  renderizar();
+});
+
+onValue(query(ref(db,'cola'), orderByChild('atendido')), snap => {
+  let c = 0;
+  snap.forEach(child => { if (!child.val().atendido) c++; });
+  colaCount = c;
+  renderizar();
+});
+
+onValue(query(ref(db,'historial'), orderByChild('ts')), snap => {
+  historialActual = [];
+  snap.forEach(child => historialActual.push(child.val()));
+  renderizar();
+});
+
+// Cargar lista de días con cierre al iniciar
+(async function cargarListaCierres() {
+  try {
+    const snap = await get(ref(db, 'cierres'));
+    if (!snap.exists()) return;
+    const sel = document.getElementById('sel-cierre');
+    const fechas = [];
+    snap.forEach(child => fechas.push(child.key));
+    fechas.sort().reverse().forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f; opt.textContent = f;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.warn('cierres:', e); }
+})();
+
+// ── Render principal ───────────────────────────────────────────────────────
+function renderizar() {
+  renderizarGlobales();
+  renderizarModulos();
+  renderizarRanking();
+  renderizarTramites();
+  renderizarPausas();
+}
+
+function renderizarTramites() {
+  const cont  = document.getElementById('tramites-grid');
+  if (!cont) return;
+
+  const conteo = {};
+  let total = 0;
+  historialActual.forEach(h => {
+    if (h.tipo !== 'llamada' || !h.tramiteNombre) return;
+    const cat = h.tramiteNombre.split(' — ')[0].trim();
+    conteo[cat] = (conteo[cat] || 0) + 1;
+    total++;
+  });
+
+  if (!Object.keys(conteo).length) {
+    cont.innerHTML = '<div class="pausas-vacio">Sin datos de trámites en la sesión actual</div>';
+    return;
+  }
+
+  const iconos = { 'Aclaración':'📝', 'Trámite':'📋', 'Consulta de adeudos':'💰', 'Otro':'❓' };
+  const items  = Object.entries(conteo).sort((a,b) => b[1]-a[1]);
+  cont.innerHTML = items.map(([cat, n]) => `
+    <div class="tramite-stat">
+      <div class="tramite-icono">${iconos[cat] || '📌'}</div>
+      <div class="tramite-info">
+        <div class="tramite-nombre">${cat}</div>
+        <div class="tramite-count">${n}</div>
+        <div class="tramite-pct">${total ? Math.round(n/total*100) : 0}% del total</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Cargar resumen de cierre de un día específico ─────────────────────────
+window.cargarCierre = async function(fecha) {
+  const det   = document.getElementById('cierre-detalle');
+  const vacio = document.getElementById('cierre-vacio');
+  if (!fecha) { det.style.display='none'; vacio.style.display='block'; return; }
+  try {
+    const snap = await get(ref(db, 'cierres/' + fecha));
+    if (!snap.exists()) { det.style.display='none'; vacio.textContent='No hay datos para esta fecha.'; vacio.style.display='block'; return; }
+    const d = snap.val();
+    const mejor = d.mejorModulo ? `⭐ ${d.mejorModulo.nombre} (${d.mejorModulo.count} atendidos)` : '—';
+    const filasMod = Object.entries(d.porModulo || {}).map(([i, m]) =>
+      `<div class="cierre-mod-fila"><span class="cierre-mod-nombre">${m.nombre} · Mód.${i}</span><span class="cierre-mod-count">${m.atendidos}</span></div>`
+    ).join('');
+    const filasTram = Object.entries(d.tramites || {}).sort((a,b)=>b[1]-a[1]).map(([cat, n]) =>
+      `<div class="cierre-tram-fila"><span class="cierre-tram-nom">${cat}</span><span class="cierre-tram-n">${n}</span></div>`
+    ).join('');
+    det.innerHTML = `
+      <div class="cierre-hdr">
+        <div>
+          <div class="cierre-label">Resumen del día</div>
+          <div class="cierre-fecha">${fecha}</div>
+          <div class="cierre-estrella" style="margin-top:6px;font-size:12px;">${mejor}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="cierre-label">Total atendidos</div>
+          <div class="cierre-total">${d.totalAtendidos}</div>
+        </div>
+      </div>
+      <div class="cierre-sections">
+        <div class="cierre-sec">
+          <div class="cierre-sec-tit">Por módulo</div>
+          ${filasMod || '<div style="color:var(--texto-d);font-size:12px;">Sin datos</div>'}
+        </div>
+        <div class="cierre-sec">
+          <div class="cierre-sec-tit">Por trámite</div>
+          ${filasTram || '<div style="color:var(--texto-d);font-size:12px;">Sin datos</div>'}
+        </div>
+      </div>`;
+    det.style.display='block';
+    vacio.style.display='none';
+  } catch(e) { console.warn('cierre:', e); }
+};
+
+function renderizarGlobales() {
+  const modulos = estadoActual?.modulos || {};
+  let total = 0;
+  let activos = 0;
+  let enPausa = 0;
+
+  for (let i = 1; i <= MODS; i++) {
+    const m  = modulos[i];
+    const pm = panelActual?.modulos?.[i];
+    if (m) total += m.totalAtendidos || 0;
+    if (pm?.estado === 'activo')  activos++;
+    if (pm?.estado === 'pausa')   enPausa++;
+  }
+
+  document.getElementById('g-total').textContent   = total;
+  document.getElementById('g-activos').textContent = activos + ' / ' + MODS;
+  document.getElementById('g-pausa').textContent   = enPausa;
+  document.getElementById('g-espera').textContent  = colaCount;
+  const tg = estadoActual?.turnoGlobal;
+  document.getElementById('g-ultimo').textContent  = tg ? 'T-'+pad3(tg) : '—';
+}
+
+function renderizarModulos() {
+  const grid = document.getElementById('modulos-grid');
+  grid.innerHTML = '';
+  const ahora  = Date.now();
+  const modulos = estadoActual?.modulos || {};
+
+  for (let i = 1; i <= MODS; i++) {
+    const m   = modulos[i] || {};
+    const pm  = panelActual?.modulos?.[i] || {};
+    const nombre = NOMBRES[i] || '';
+    const estado = pm.estado || 'offline';
+    const ultimaLlamada = pm.ultimaLlamada;
+    const ms = ultimaLlamada ? ahora - ultimaLlamada : null;
+    const tiempoClase = ms === null ? '' : ms > 20*60*1000 ? 'alerta' : ms > 10*60*1000 ? 'advertencia' : '';
+    const tiempoTxt   = ms === null ? 'Sin actividad registrada' : 'Hace ' + durStr(ms);
+
+    const div = document.createElement('div');
+    div.className = 'mod-card ' + estado;
+
+    let badgeTxt  = 'Offline';
+    let badgeCls  = 'offline';
+    if (estado === 'activo')   { badgeTxt='● Activo';    badgeCls='activo'; }
+    if (estado === 'pausa')    { badgeTxt='☕ En pausa';  badgeCls='pausa'; }
+    if (estado === 'inactivo') { badgeTxt='⚠ Sin llamar'; badgeCls='inactivo'; }
+
+    div.innerHTML = `
+      <div class="mod-top">
+        <div class="mod-nombre-wrap">
+          <div class="mod-ejecutivo">${nombre}</div>
+          <div class="mod-num">Módulo ${i}</div>
+        </div>
+        <span class="mod-badge ${badgeCls}">${badgeTxt}</span>
+      </div>
+      <div class="mod-turno-grande ${m.turnoActual ? '' : 'vacio'}">${turnoStr(m.turnoActual)}</div>
+      <div class="mod-tiempo ${tiempoClase}">
+        <span class="dot-t"></span>${tiempoTxt}
+      </div>
+      <div class="mod-stats">
+        <div class="mod-stat">
+          <div class="mod-stat-label">Atendidos</div>
+          <div class="mod-stat-val">${m.totalAtendidos || 0}</div>
+        </div>
+        <div class="mod-stat">
+          <div class="mod-stat-label">Último turno</div>
+          <div class="mod-stat-val">${turnoStr(pm.ultimoTurno || m.turnoActual)}</div>
+        </div>
+        <div class="mod-stat">
+          <div class="mod-stat-label">Última llamada</div>
+          <div class="mod-stat-val">${formatHora(ultimaLlamada)}</div>
+        </div>
+      </div>
+    `;
+    grid.appendChild(div);
+  }
+}
+
+function renderizarRanking() {
+  const lista   = document.getElementById('ranking-lista');
+  const modulos = estadoActual?.modulos || {};
+  const datos   = [];
+  for (let i = 1; i <= MODS; i++) {
+    const m = modulos[i];
+    datos.push({ i, nombre: NOMBRES[i]||'', atendidos: m?.totalAtendidos||0 });
+  }
+  datos.sort((a,b) => b.atendidos - a.atendidos);
+  const maximo = datos[0]?.atendidos || 1;
+
+  lista.innerHTML = datos.map((d, idx) => {
+    const posClases = ['oro','plata','bronce'];
+    const posCls    = posClases[idx] || '';
+    const pct       = maximo > 0 ? (d.atendidos/maximo)*100 : 0;
+    return `
+      <div class="ranking-item">
+        <span class="rank-pos ${posCls}">${idx+1}</span>
+        <div class="rank-info">
+          <div class="rank-nombre">${d.nombre}</div>
+          <div class="rank-modulo">Módulo ${d.i}</div>
+        </div>
+        <div class="rank-barra-wrap"><div class="rank-barra" style="width:${pct}%"></div></div>
+        <span class="rank-num">${d.atendidos}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderizarPausas() {
+  const lista = document.getElementById('pausas-lista');
+  if (!pausasHoy.length) {
+    lista.innerHTML = '<div class="pausas-vacio">Sin pausas registradas hoy</div>';
+    return;
+  }
+  lista.innerHTML = pausasHoy.slice(0,20).map(p => {
+    const duracion = p.fin
+      ? durStr(p.fin - p.inicio)
+      : '<span class="pausa-activa">En pausa ahora</span>';
+    return `
+      <div class="pausa-item">
+        <span class="pausa-icono">☕</span>
+        <div>
+          <div class="pausa-nombre">${p.nombre || 'Módulo '+p.modulo}</div>
+          <div class="pausa-hora">${formatHora(p.inicio)}${p.fin ? ' – '+formatHora(p.fin) : ''}</div>
+        </div>
+        <div class="pausa-dur">${duracion}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── Actualizar tiempos cada 30s (sin re-leer Firebase) ────────────────────
+setInterval(() => renderizarModulos(), 30000);
+
+// ── Reloj ──────────────────────────────────────────────────────────────────
+function tick() {
+  document.getElementById('reloj').textContent = new Date().toLocaleTimeString('es-MX');
+}
+setInterval(tick, 1000);
+tick();
+</script>
+</body>
+</html>
