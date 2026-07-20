@@ -1052,7 +1052,7 @@
         <option value="2">Módulo 2 · Mercedes</option>
         <option value="3">Módulo 3 · Silvia</option>
         <option value="4">Módulo 4 · Oscar</option>
-        <option value="5">Módulo 5 · Jonathan</option>
+        <option value="5">Módulo 5 · Claudia</option>
         <option value="6">Módulo 6 · Lourdes</option>
       </select>
     </div>
@@ -1193,10 +1193,24 @@
   const db   = getDatabase(app);
   const MODS = 6;
 
-  const NOMBRES_MODULO = {
+  let NOMBRES_MODULO = {
     1: 'Samuel', 2: 'Mercedes', 3: 'Silvia',
-    4: 'Oscar',  5: 'Jonathan', 6: 'Lourdes'
+    4: 'Oscar',  5: 'Claudia',  6: 'Lourdes'
   };
+
+  // Leer nombres personalizados desde Firebase (editados desde supervisor.html)
+  onValue(ref(db, 'config/nombresModulo'), snap => {
+    const v = snap.val();
+    if (v) {
+      Object.keys(v).forEach(k => { NOMBRES_MODULO[parseInt(k)] = v[k]; });
+      // Actualizar el selector y el grid si ya hay módulo seleccionado
+      for (let i = 1; i <= MODS; i++) {
+        const opt = document.querySelector(`#sel-modulo option[value="${i}"]`);
+        if (opt) opt.textContent = `Módulo ${i} · ${NOMBRES_MODULO[i]}`;
+      }
+      if (miModulo) renderizar();
+    }
+  });
 
   let miModulo        = null;
   let enPausa         = false;
@@ -1821,8 +1835,9 @@
         )
       };
 
-      // Guardar en /cierres/{fecha} en Firebase
-      await set(ref(db, 'cierres/' + fechaHoy), resumen);
+      // Usar update (no set) para no sobreescribir las /aclaraciones
+      // que ya pudo haber guardado el mismo día
+      await update(ref(db, 'cierres/' + fechaHoy), resumen);
       console.log('Resumen del día guardado:', fechaHoy);
     } catch(e) {
       console.warn('Error al generar resumen:', e);

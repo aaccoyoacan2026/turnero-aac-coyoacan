@@ -231,6 +231,82 @@ header{
 .cierre-tram-n{font-family:'DM Mono',monospace;font-weight:700;color:var(--morado);}
 .cierre-estrella{color:var(--amarillo);font-weight:700;}
 
+/* ── BOTÓN EDITAR NOMBRES ── */
+.btn-editar-nombres {
+  background: rgba(168,85,247,0.12);
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-family:'DM Sans',sans-serif;
+  font-size:11px; font-weight:700;
+  color:#c084fc; cursor:pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-editar-nombres:hover { background: rgba(168,85,247,0.22); }
+
+/* ── MODAL RENOMBRAR MÓDULOS ── */
+.modal-nombres-fondo {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-nombres-fondo.visible { display:flex; }
+.modal-nombres-caja {
+  background: #0d1625;
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:18px; padding:28px 24px;
+  width:min(460px,100%);
+  box-shadow:0 32px 80px rgba(0,0,0,0.5);
+  animation:mnin 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes mnin {
+  from{opacity:0;transform:translateY(14px) scale(0.97);}
+  to  {opacity:1;transform:translateY(0)    scale(1);}
+}
+.modal-nombres-titulo { font-size:17px; font-weight:800; color:#fff; margin-bottom:4px; }
+.modal-nombres-sub    { font-size:11px; color:var(--texto-d); margin-bottom:20px; line-height:1.5; }
+.modal-nombres-campos { display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+.mn-fila {
+  display:grid; grid-template-columns:110px 1fr;
+  align-items:center; gap:10px;
+}
+.mn-label {
+  font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--texto-d);
+}
+.mn-input {
+  background:rgba(255,255,255,0.05);
+  border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:10px;
+  padding:9px 14px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px; font-weight:600;
+  color:#fff; outline:none;
+  transition:border-color 0.2s;
+}
+.mn-input:focus { border-color:#a855f7; }
+.modal-nombres-acciones {
+  display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+}
+.mnbtn-cancelar, .mnbtn-reset, .mnbtn-guardar {
+  padding:9px 16px; border-radius:10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px; font-weight:700;
+  cursor:pointer; border:none;
+  transition:opacity 0.15s, background 0.15s;
+}
+.mnbtn-cancelar { background:rgba(255,255,255,0.07); color:var(--texto-d); }
+.mnbtn-cancelar:hover { background:rgba(255,255,255,0.12); }
+.mnbtn-reset    { background:rgba(239,68,68,0.12); color:#f87171;
+  border:1px solid rgba(239,68,68,0.25); }
+.mnbtn-reset:hover { background:rgba(239,68,68,0.2); }
+.mnbtn-guardar  { background:#a855f7; color:#fff;
+  box-shadow:0 4px 16px rgba(168,85,247,0.35); }
+.mnbtn-guardar:hover { background:#9333ea; }
+
 /* ── HISTORIAL DE PAUSAS ── */
 .pausas-lista{
   background:var(--s1);border:1px solid var(--border);border-radius:14px;
@@ -268,6 +344,7 @@ header{
   </div>
   <div class="h-der">
     <div class="chip readonly">👁 Supervisor</div>
+    <button class="btn-editar-nombres" onclick="abrirModalNombres()" title="Renombrar módulos">✏️ Módulos</button>
     <div class="chip conectando" id="badge-conn">⟳ Conectando</div>
     <div class="reloj" id="reloj">00:00:00</div>
   </div>
@@ -342,10 +419,26 @@ header{
 
 </div>
 
+<!-- Modal: Renombrar módulos -->
+<div class="modal-nombres-fondo" id="modal-nombres">
+  <div class="modal-nombres-caja">
+    <div class="modal-nombres-header">
+      <div class="modal-nombres-titulo">✏️ Renombrar módulos</div>
+      <div class="modal-nombres-sub">Los cambios se guardan en Firebase y aplican a todos los archivos</div>
+    </div>
+    <div class="modal-nombres-campos" id="modal-nombres-campos"></div>
+    <div class="modal-nombres-acciones">
+      <button class="mnbtn-reset"    onclick="resetNombres()">↺ Restaurar nombres originales</button>
+      <button class="mnbtn-cancelar" onclick="cerrarModalNombres()">Cancelar</button>
+      <button class="mnbtn-guardar"  onclick="guardarNombres()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, get, query, orderByChild, limitToLast }
+import { getDatabase, ref, onValue, get, set, update, query, orderByChild, limitToLast }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -355,7 +448,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-const NOMBRES = { 1:'Samuel', 2:'Mercedes', 3:'Silvia', 4:'Oscar', 5:'Jonathan', 6:'Lourdes' };
+const NOMBRES_DEFAULT = { 1:'Samuel', 2:'Mercedes', 3:'Silvia', 4:'Oscar', 5:'Claudia', 6:'Lourdes' };
+let NOMBRES = { ...NOMBRES_DEFAULT };   // puede ser sobreescrito desde Firebase
 const MODS    = 6;
 
 // ── Conexión ──────────────────────────────────────────────────────────────
@@ -425,21 +519,37 @@ onValue(query(ref(db,'historial'), orderByChild('ts')), snap => {
   renderizar();
 });
 
-// Cargar lista de días con cierre al iniciar
-(async function cargarListaCierres() {
-  try {
-    const snap = await get(ref(db, 'cierres'));
-    if (!snap.exists()) return;
-    const sel = document.getElementById('sel-cierre');
-    const fechas = [];
-    snap.forEach(child => fechas.push(child.key));
-    fechas.sort().reverse().forEach(f => {
-      const opt = document.createElement('option');
-      opt.value = f; opt.textContent = f;
-      sel.appendChild(opt);
-    });
-  } catch(e) { console.warn('cierres:', e); }
-})();
+// Escuchar cierres en tiempo real — el selector se actualiza sin recargar
+onValue(ref(db, 'cierres'), snap => {
+  const sel = document.getElementById('sel-cierre');
+  if (!sel) return;
+  const valorActual = sel.value;
+  // Limpiar opciones excepto la primera
+  while (sel.options.length > 1) sel.remove(1);
+  if (!snap.exists()) return;
+  const fechas = [];
+  snap.forEach(child => fechas.push(child.key));
+  fechas.sort().reverse().forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    sel.appendChild(opt);
+  });
+  // Mantener la selección actual si sigue existiendo
+  if (valorActual) sel.value = valorActual;
+});
+
+// Escuchar nombres personalizados de módulos desde Firebase
+onValue(ref(db, 'config/nombresModulo'), snap => {
+  const v = snap.val();
+  if (v) {
+    Object.keys(v).forEach(k => { NOMBRES[parseInt(k)] = v[k]; });
+    renderizarRanking();
+    renderizarModulos();
+    // Refrescar campos de edición si el modal está abierto
+    const modal = document.getElementById('modal-nombres');
+    if (modal && modal.classList.contains('visible')) renderCamposNombres();
+  }
+});
 
 // ── Render principal ───────────────────────────────────────────────────────
 function renderizar() {
@@ -651,6 +761,76 @@ function renderizarPausas() {
       </div>`;
   }).join('');
 }
+
+// ── MODAL RENOMBRAR MÓDULOS ──────────────────────────────────────────────
+const MODS_SV = 6;
+
+function renderCamposNombres() {
+  const cont = document.getElementById('modal-nombres-campos');
+  if (!cont) return;
+  cont.innerHTML = '';
+  for (let i = 1; i <= MODS_SV; i++) {
+    const fila = document.createElement('div');
+    fila.className = 'mn-fila';
+    fila.innerHTML = `
+      <span class="mn-label">Módulo ${i}</span>
+      <input class="mn-input" id="mn-input-${i}"
+             type="text" maxlength="30"
+             value="${NOMBRES[i] || ''}"
+             placeholder="Nombre del ejecutivo">`;
+    cont.appendChild(fila);
+  }
+}
+
+window.abrirModalNombres = function() {
+  renderCamposNombres();
+  document.getElementById('modal-nombres').classList.add('visible');
+  const primer = document.getElementById('mn-input-1');
+  if (primer) setTimeout(() => primer.focus(), 150);
+};
+
+window.cerrarModalNombres = function() {
+  document.getElementById('modal-nombres').classList.remove('visible');
+};
+
+window.guardarNombres = async function() {
+  const nuevos = {};
+  for (let i = 1; i <= MODS_SV; i++) {
+    const inp = document.getElementById('mn-input-' + i);
+    const val = inp ? inp.value.trim() : '';
+    nuevos[i]  = val || NOMBRES_DEFAULT[i];  // si queda vacío, restaurar nombre original
+  }
+  try {
+    await set(ref(db, 'config/nombresModulo'), nuevos);
+    // Actualizar copia local inmediatamente
+    Object.assign(NOMBRES, nuevos);
+    cerrarModalNombres();
+    renderizarRanking();
+    renderizarModulos();
+  } catch(e) {
+    alert('Error al guardar. Verifica la conexión con Firebase.');
+    console.warn(e);
+  }
+};
+
+window.resetNombres = async function() {
+  if (!confirm('¿Restaurar los nombres originales de todos los módulos?')) return;
+  try {
+    await set(ref(db, 'config/nombresModulo'), NOMBRES_DEFAULT);
+    Object.assign(NOMBRES, NOMBRES_DEFAULT);
+    cerrarModalNombres();
+    renderizarRanking();
+    renderizarModulos();
+  } catch(e) {
+    alert('Error al restaurar. Verifica la conexión.');
+    console.warn(e);
+  }
+};
+
+// Cerrar modal con Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') cerrarModalNombres();
+});
 
 // ── Actualizar tiempos cada 30s (sin re-leer Firebase) ────────────────────
 setInterval(() => renderizarModulos(), 30000);
