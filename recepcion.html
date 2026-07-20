@@ -642,6 +642,65 @@ header {
   .barra-inferior { left:0; }
 }
 
+/* ── CONTROL DE LAPSO ────────────────────────────────────────────────────── */
+.ctrl-lapso-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 8px 4px;
+}
+.ctrl-lapso-etiqueta {
+  font-size: 11px; font-weight: 600;
+  color: var(--texto-d);
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.ctrl-lapso-controles {
+  display: flex; align-items: center; gap: 8px;
+}
+.ctrl-lapso-btn {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: var(--glass);
+  backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--acento); font-size: 16px; font-weight: 700;
+  cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ctrl-lapso-btn:hover  { background: var(--acento-d); border-color: var(--acento); }
+.ctrl-lapso-btn:active { transform: scale(0.93); }
+.ctrl-lapso-input {
+  width: 46px; text-align: center;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 5px 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 15px; font-weight: 700;
+  color: var(--texto); outline: none;
+  -moz-appearance: textfield;
+}
+.ctrl-lapso-input::-webkit-inner-spin-button,
+.ctrl-lapso-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.ctrl-lapso-input:focus { border-color: var(--acento); }
+.ctrl-lapso-unidad {
+  font-size: 11px; font-weight: 700;
+  color: var(--acento);
+  font-family: 'DM Mono', monospace;
+  min-width: 22px;
+}
+
+/* Ajustes tema clay para el control */
+body.clay .ctrl-lapso-btn {
+  border-width: 2px;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+}
+body.clay .ctrl-lapso-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+
 .btn-confirmar {
   width:100%; border:none; border-radius:var(--radio);
   padding: 20px;
@@ -768,7 +827,7 @@ header {
     <div class="exito-progreso-wrap">
       <div class="exito-progreso-bar" id="exito-progreso"></div>
     </div>
-    <div class="exito-hint">Siguiente turno en <span id="exito-cuenta">4</span>s…</div>
+    <div class="exito-hint">Siguiente turno en <span id="exito-cuenta">2</span>s…</div>
   </div>
 </div>
 
@@ -871,6 +930,18 @@ header {
 
 <!-- Botón fijo -->
 <div class="barra-inferior">
+  <div class="ctrl-lapso-wrap">
+    <span class="ctrl-lapso-etiqueta">⏱ Pausa entre turnos</span>
+    <div class="ctrl-lapso-controles">
+      <button class="ctrl-lapso-btn" onclick="cambiarLapso(-1)">−</button>
+      <input  class="ctrl-lapso-input" id="ctrl-lapso" type="number"
+              min="1" max="30" value="2"
+              onchange="lapsoDesdeInput(this.value)"
+              oninput="lapsoDesdeInput(this.value)">
+      <span   class="ctrl-lapso-unidad" id="ctrl-lapso-lbl">2s</span>
+      <button class="ctrl-lapso-btn" onclick="cambiarLapso(1)">+</button>
+    </div>
+  </div>
   <button class="btn-confirmar" id="btn-confirmar" disabled onclick="confirmarTurno()">
     🎫 Generar turno
   </button>
@@ -1316,42 +1387,76 @@ function sonarTurno() {
   } catch(e) { console.warn('Audio:', e); }
 }
 
-// ── Éxito: muestra 4s, barra de progreso, luego reinicia automáticamente ──
+// ── TIEMPO ENTRE TURNOS — configurable y persistido en localStorage ─────────
+const LAPSO_KEY     = 'recepcion_lapso_seg';
+const LAPSO_MIN     = 1;
+const LAPSO_MAX     = 30;
+const LAPSO_DEFAULT = 2;
+
+function getLapso() {
+  const v = parseInt(localStorage.getItem(LAPSO_KEY));
+  return (!isNaN(v) && v >= LAPSO_MIN && v <= LAPSO_MAX) ? v : LAPSO_DEFAULT;
+}
+
+function setLapso(seg) {
+  const v = Math.min(LAPSO_MAX, Math.max(LAPSO_MIN, parseInt(seg) || LAPSO_DEFAULT));
+  localStorage.setItem(LAPSO_KEY, v);
+  actualizarInputLapso();
+  return v;
+}
+
+function actualizarInputLapso() {
+  const inp = document.getElementById('ctrl-lapso');
+  const lbl = document.getElementById('ctrl-lapso-lbl');
+  if (inp) inp.value = getLapso();
+  if (lbl) lbl.textContent = getLapso() + 's';
+}
+
+window.cambiarLapso = function(delta) {
+  setLapso(getLapso() + delta);
+};
+window.lapsoDesdeInput = function(val) {
+  setLapso(val);
+};
+
+// ── Éxito: muestra N segundos (configurable), barra de progreso, luego reinicia
 let exitoTimer = null;
 let exitoCuentaTimer = null;
 
 function mostrarExito(num, tramite) {
   sonarTurno();
+  const lapso = getLapso();
+
   document.getElementById('exito-turno').textContent = 'T-'+pad3(num);
   document.getElementById('exito-detalle').innerHTML =
     `<strong>${tramite}</strong><br>
      <span style="font-size:11px;color:var(--texto-d);">En fila de espera.</span>`;
   document.getElementById('overlay-exito').classList.add('visible');
 
-  // Barra de progreso: vaciar en 4s con CSS transition
+  // Barra de progreso con duración dinámica
   const barra = document.getElementById('exito-progreso');
   barra.style.transition = 'none';
   barra.style.transform  = 'scaleX(1)';
-  void barra.offsetWidth; // reflow
-  barra.style.transition = 'transform 4s linear';
+  void barra.offsetWidth;
+  barra.style.transition = `transform ${lapso}s linear`;
   barra.style.transform  = 'scaleX(0)';
 
   // Cuenta regresiva
-  let cuenta = 4;
+  let cuenta = lapso;
   document.getElementById('exito-cuenta').textContent = cuenta;
   if (exitoCuentaTimer) clearInterval(exitoCuentaTimer);
   exitoCuentaTimer = setInterval(() => {
     cuenta--;
     const el = document.getElementById('exito-cuenta');
-    if (el) el.textContent = cuenta;
+    if (el) el.textContent = Math.max(0, cuenta);
     if (cuenta <= 0) clearInterval(exitoCuentaTimer);
   }, 1000);
 
-  // Auto-cierre y reinicio
+  // Auto-cierre
   if (exitoTimer) clearTimeout(exitoTimer);
   exitoTimer = setTimeout(() => {
     reiniciarFormulario();
-  }, 4000);
+  }, lapso * 1000);
 }
 
 // ── TEMAS: oscuro/claro + claymorfismo ─────────────────────────────────
@@ -1383,6 +1488,7 @@ window.toggleClay = function() {
 
 // Aplicar al cargar
 aplicarTemas();
+actualizarInputLapso();
 
 window.reiniciarFormulario = function() {
   tramiteSel = null; catAbierta = null;
