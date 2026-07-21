@@ -1820,7 +1820,11 @@
         if (count > mejorModulo.count) mejorModulo = { id: i, nombre: NOMBRES_MODULO[i], count };
       }
 
-      const fechaHoy = new Date().toISOString().slice(0,10);
+      // Usar fecha LOCAL (no UTC) — en México a las 18:00 UTC sería 00:00 del día sig.
+      const hoy     = new Date();
+      const fechaHoy = hoy.getFullYear() + '-' +
+        String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+        String(hoy.getDate()).padStart(2, '0');
       const resumen  = {
         fecha:          fechaHoy,
         ts:             Date.now(),
@@ -1835,12 +1839,13 @@
         )
       };
 
-      // Usar update (no set) para no sobreescribir las /aclaraciones
-      // que ya pudo haber guardado el mismo día
+      // Usar update (no set) para no sobreescribir /aclaraciones del mismo día
       await update(ref(db, 'cierres/' + fechaHoy), resumen);
-      console.log('Resumen del día guardado:', fechaHoy);
+      console.log('Resumen del día guardado en:', fechaHoy, 'Total:', totalAtendidos);
     } catch(e) {
-      console.warn('Error al generar resumen:', e);
+      // Mostrar el error real para diagnóstico
+      console.error('Error al generar resumen del día:', e);
+      alert('⚠ No se pudo guardar el resumen del día:\n' + (e.message || e));
     }
   }
 
@@ -1849,7 +1854,21 @@
     if (!primera) return;
     const segunda = confirm('¿Confirmas que deseas reiniciar? Esta es tu última oportunidad para cancelar.');
     if (!segunda) return;
-    // Generar y guardar resumen ANTES de limpiar
+    // 1. Señal para que supervisor.html guarde el cierre AHORA (antes de limpiar)
+    //    El supervisor tiene el historial completo en memoria, así es más fiable.
+    const hoyReinicio   = new Date();
+    const fechaReinicio = hoyReinicio.getFullYear() + '-' +
+      String(hoyReinicio.getMonth() + 1).padStart(2, '0') + '-' +
+      String(hoyReinicio.getDate()).padStart(2, '0');
+    await update(ref(db, 'cierres/' + fechaReinicio), {
+      _solicitudCierre: Date.now(),   // el supervisor detecta este campo y guarda
+      _reiniciadoA: new Date().toLocaleTimeString('es-MX')
+    });
+
+    // 2. Esperar 2 segundos para que el supervisor procese la señal
+    await new Promise(r => setTimeout(r, 2000));
+
+    // 3. Generar resumen desde operador también (como respaldo)
     await generarResumenDia();
     await set(estadoRef,    estadoInicial());
     await set(historialRef, null);

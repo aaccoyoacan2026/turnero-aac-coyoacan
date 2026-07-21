@@ -404,6 +404,8 @@ header{
       <select id="sel-cierre" class="sel-cierre" onchange="cargarCierre(this.value)">
         <option value="">— Seleccionar día —</option>
       </select>
+      <button id="btn-guardar-cierre" onclick="guardarCierreHoy(true)" title="Guardar el resumen del día de hoy"
+        style="margin-left:8px;background:#a855f7;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px;">💾 Guardar hoy</button>
     </div>
     <div id="cierre-detalle" class="cierre-card" style="display:none;"></div>
     <div id="cierre-vacio" class="pausas-vacio">Selecciona un día para ver el resumen</div>
@@ -494,6 +496,7 @@ let historialActual = [];
 onValue(ref(db, 'estado'), snap => {
   estadoActual = snap.val() || {};
   renderizar();
+  programarGuardadoCierre();
 });
 
 onValue(ref(db, 'panel'), snap => {
@@ -517,9 +520,46 @@ onValue(query(ref(db,'historial'), orderByChild('ts')), snap => {
   historialActual = [];
   snap.forEach(child => historialActual.push(child.val()));
   renderizar();
+  programarGuardadoCierre();
 });
 
-// Escuchar cierres en tiempo real — el selector se actualiza sin recargar
+// ── Guardado del cierre del día (resumen persistido en cierres/{fecha}) ──────
+function construirResumenHoy() {
+  // El total y el conteo por módulo se calculan contando las LLAMADAS del historial del día
+  // (una 'regresar' descuenta la llamada que se canceló).
+  const porModulo = {}; const tramites = {}; let totalAtendidos = 0;
+  historialActual.forEach(h => {
+    const i = h.modulo;
+    if (h.tipo === 'llamada') {
+      if (i) { porModulo[i] = porModulo[i] || { nombre: NOMBRES[i] || ('Módulo ' + i), atendidos: 0 }; porModulo[i].atendidos++; }
+      totalAtendidos++;
+      if (h.tramiteNombre) { const cat = h.tramiteNombre.split(' — ')[0].trim(); tramites[cat] = (tramites[cat] || 0) + 1; }
+    } else if (h.tipo === 'regresar') {
+      if (i && porModulo[i]) porModulo[i].atendidos = Math.max(0, porModulo[i].atendidos - 1);
+      totalAtendidos = Math.max(0, totalAtendidos - 1);
+    }
+  });
+  Object.keys(porModulo).forEach(i => { porModulo[i].nombre = NOMBRES[i] || porModulo[i].nombre; });
+  let mejorModulo = null;
+  Object.values(porModulo).forEach(m => { if (!mejorModulo || m.atendidos > mejorModulo.count) mejorModulo = { nombre: m.nombre, count: m.atendidos }; });
+  return { totalAtendidos, porModulo, tramites, mejorModulo, actualizado: Date.now() };
+}
+window.guardarCierreHoy = async function(manual) {
+  const _d = new Date();
+  const fecha = _d.getFullYear() + '-' +
+    String(_d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(_d.getDate()).padStart(2, '0');
+  const r = construirResumenHoy();
+  if (r.totalAtendidos === 0 && Object.keys(r.tramites).length === 0) { if (manual) avisarCierre('Aún no hay datos de hoy'); return; }
+  try { await update(ref(db, 'cierres/' + fecha), r); if (manual) avisarCierre('✓ Cierre de hoy guardado'); }
+  catch (e) { console.warn('guardar cierre:', e); if (manual) avisarCierre('Error al guardar'); }
+};
+function avisarCierre(msg) { const b = document.getElementById('btn-guardar-cierre'); if (!b) return; const t = b.textContent; b.textContent = msg; setTimeout(() => { b.textContent = t; }, 1800); }
+let _cierreTimer = null;
+function programarGuardadoCierre() { clearTimeout(_cierreTimer); _cierreTimer = setTimeout(() => guardarCierreHoy(false), 4000); }
+
+// Escuchar cierres en tiempo real — actualiza selector Y detecta solicitud de cierre
+let _ultimaSolicitudCierre = 0;
 onValue(ref(db, 'cierres'), snap => {
   const sel = document.getElementById('sel-cierre');
   if (!sel) return;
@@ -528,7 +568,18 @@ onValue(ref(db, 'cierres'), snap => {
   while (sel.options.length > 1) sel.remove(1);
   if (!snap.exists()) return;
   const fechas = [];
-  snap.forEach(child => fechas.push(child.key));
+  snap.forEach(child => {
+    fechas.push(child.key);
+    // Detectar señal de solicitud de cierre enviada por operador.html
+    const v = child.val();
+    if (v && v._solicitudCierre && v._solicitudCierre > _ultimaSolicitudCierre) {
+      _ultimaSolicitudCierre = v._solicitudCierre;
+      // Guardar el cierre CON EL HISTORIAL QUE TENEMOS EN MEMORIA
+      // (supervisor tiene el historial completo y actualizado)
+      console.log('Solicitud de cierre detectada para:', child.key);
+      guardarCierreHoy(false);
+    }
+  });
   fechas.sort().reverse().forEach(f => {
     const opt = document.createElement('option');
     opt.value = f; opt.textContent = f;
@@ -600,11 +651,24 @@ window.cargarCierre = async function(fecha) {
     const snap = await get(ref(db, 'cierres/' + fecha));
     if (!snap.exists()) { det.style.display='none'; vacio.textContent='No hay datos para esta fecha.'; vacio.style.display='block'; return; }
     const d = snap.val();
-    const mejor = d.mejorModulo ? `⭐ ${d.mejorModulo.nombre} (${d.mejorModulo.count} atendidos)` : '—';
-    const filasMod = Object.entries(d.porModulo || {}).map(([i, m]) =>
+    // Si el día no tiene resumen guardado, derivarlo de las aclaraciones registradas por el operador
+    let porModulo = d.porModulo, tramites = d.tramites, totalAtendidos = d.totalAtendidos, mejorModulo = d.mejorModulo;
+    if ((totalAtendidos == null || !porModulo) && d.aclaraciones) {
+      const acl = Object.values(d.aclaraciones);
+      porModulo = {};
+      acl.forEach(a => { const i = a.modulo; if (!i) return;
+        porModulo[i] = porModulo[i] || { nombre: (a.ejecutivo || NOMBRES[i] || ('Módulo ' + i)), atendidos: 0 };
+        porModulo[i].atendidos++; });
+      totalAtendidos = acl.length;
+      tramites = tramites || {};
+      mejorModulo = null;
+      Object.values(porModulo).forEach(m => { if (!mejorModulo || m.atendidos > mejorModulo.count) mejorModulo = { nombre: m.nombre, count: m.atendidos }; });
+    }
+    const mejor = mejorModulo ? `⭐ ${mejorModulo.nombre} (${mejorModulo.count} atendidos)` : '—';
+    const filasMod = Object.entries(porModulo || {}).map(([i, m]) =>
       `<div class="cierre-mod-fila"><span class="cierre-mod-nombre">${m.nombre} · Mód.${i}</span><span class="cierre-mod-count">${m.atendidos}</span></div>`
     ).join('');
-    const filasTram = Object.entries(d.tramites || {}).sort((a,b)=>b[1]-a[1]).map(([cat, n]) =>
+    const filasTram = Object.entries(tramites || {}).sort((a,b)=>b[1]-a[1]).map(([cat, n]) =>
       `<div class="cierre-tram-fila"><span class="cierre-tram-nom">${cat}</span><span class="cierre-tram-n">${n}</span></div>`
     ).join('');
     det.innerHTML = `
@@ -616,7 +680,7 @@ window.cargarCierre = async function(fecha) {
         </div>
         <div style="text-align:right">
           <div class="cierre-label">Total atendidos</div>
-          <div class="cierre-total">${d.totalAtendidos}</div>
+          <div class="cierre-total">${totalAtendidos ?? 0}</div>
         </div>
       </div>
       <div class="cierre-sections">
